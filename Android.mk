@@ -3,7 +3,7 @@ LOCAL_PATH:= $(call my-dir)
 # make wrapper static lib
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-java-files-under, src-Wrapper)
-LOCAL_MODULE := soundrecorder_wrapper
+LOCAL_MODULE := qti_soundrecorder_wrapper
 LOCAL_MODULE_TAGS := optional
 
 # support access hidden APIs
@@ -26,9 +26,10 @@ LOCAL_AAPT_FLAGS += android.support.v7.recyclerview
 
 LOCAL_STATIC_JAVA_LIBRARIES += android-support-v4
 LOCAL_STATIC_JAVA_LIBRARIES += android-support-v7-recyclerview
-LOCAL_STATIC_JAVA_LIBRARIES += soundrecorder_wrapper
+LOCAL_STATIC_JAVA_LIBRARIES += qti_soundrecorder_wrapper
 
-LOCAL_PACKAGE_NAME := SoundRecorder
+LOCAL_PACKAGE_NAME := QtiSoundRecorder
+LOCAL_OVERRIDES_PACKAGES := SoundRecorder
 
 # support access hidden APIs
 LOCAL_PRIVATE_PLATFORM_APIS:=true

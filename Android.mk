@@ -1,3 +1,4 @@
+ifeq ($(TARGET_FWK_SUPPORTS_FULL_VALUEADDS),true)
 LOCAL_PATH:= $(call my-dir)
 
 # make wrapper static lib
@@ -39,3 +40,4 @@ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 LOCAL_PRIVILEGED_MODULE := true
 
 include $(BUILD_PACKAGE)
+endif#TARGET_FWK_SUPPORTS_FULL_VALUEADDS

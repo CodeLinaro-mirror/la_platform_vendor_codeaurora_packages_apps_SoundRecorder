@@ -379,6 +379,7 @@ public class SoundRecorder extends Activity
 
         mSharedPreferences = getSharedPreferences("storage_Path", Context.MODE_PRIVATE);
         mPrefsStoragePathEditor = mSharedPreferences.edit();
+        StorageUtils.getExternalFilesDirPath(this.getApplicationContext());
 
         int maxDuration = 0;
         Intent i = getIntent();
@@ -417,7 +418,7 @@ public class SoundRecorder extends Activity
         }
         mFileType = mSharedPreferences.getInt("fileType",
                 getResources().getInteger(R.integer.def_save_type));
-        mStoragePath = mSharedPreferences.getString("storagePath", mStoragePath);
+        mStoragePath = StorageUtils.getPhoneStoragePath();
         if (!mWAVSupport && (AUDIO_WAVE_2CH_LPCM.equals(mRequestedType))) {
             mRequestedType = AUDIO_AMR;
             mFileType = 0;

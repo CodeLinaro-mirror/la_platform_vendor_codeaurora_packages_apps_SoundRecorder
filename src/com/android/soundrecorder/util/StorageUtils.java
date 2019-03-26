@@ -36,6 +36,7 @@ import org.codeaurora.wrapper.soundrecorder.util.StorageManagerWrapper;
 import org.codeaurora.wrapper.soundrecorder.util.StorageVolumeWrapper;
 import android.util.Log;
 import com.android.soundrecorder.R;
+import java.io.IOException;
 
 import java.io.File;
 
@@ -57,9 +58,23 @@ public class StorageUtils {
     private static final String STORAGE_PATH_CALL_RECORDING = STORAGE_PATH_EXTERNAL_ROOT
             + File.separator + CALL_RECORDING_FOLDER_NAME;
     private static String sSdDirectory;
+    private static String STORAGE_PATH_EXTERNAL_FILES_DIR = STORAGE_PATH_EXTERNAL_ROOT;
 
     private static final int SD_STORAGE_FREE_BLOCK = 1;
     private static final double PHONE_STORAGE_FREE_BLOCK_PERCENT = 5 / 100.0;
+
+    public static void getExternalFilesDirPath(Context context) {
+        try {
+            if (context != null) {
+                STORAGE_PATH_EXTERNAL_FILES_DIR = context.getExternalFilesDir(
+                        Environment.DIRECTORY_MUSIC).getCanonicalPath();
+                Log.d(TAG, "getExternalFilesDirPath =" + STORAGE_PATH_EXTERNAL_FILES_DIR);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "getExternalFilesDirPath error");
+            return;
+        }
+    }
 
     private static String getSdDirectory(Context context) {
         if (sSdDirectory == null) {
@@ -97,11 +112,11 @@ public class StorageUtils {
     }
 
     public static String getPhoneStoragePath() {
-        return STORAGE_PATH_LOCAL_PHONE;
+        return STORAGE_PATH_EXTERNAL_FILES_DIR;
     }
 
     public static String getSdStoragePath(Context context) {
-        return StorageUtils.getSdDirectory(context) + File.separator + FOLDER_NAME;
+        return STORAGE_PATH_EXTERNAL_FILES_DIR;
     }
 
     public static String getFmRecordingStoragePath() {

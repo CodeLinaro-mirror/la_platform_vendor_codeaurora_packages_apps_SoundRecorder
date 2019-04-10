@@ -183,45 +183,17 @@ public class FileListRecyclerAdapter extends RecyclerView.Adapter {
 
     public void reload() {
         List<BaseListItem> resultList = new ArrayList<>();
-        // find folder item
-        if (mTargetFolderArray != null) {
-            for (String folder : mTargetFolderArray) {
-                boolean isEmpty = FileUtils.isFolderEmpty(folder);
-                if (!isEmpty) {
-                    long folderId = DatabaseUtils.getFolderId(mContentResolver, folder);
-                    if (folderId != DatabaseUtils.NOT_FOUND) {
-                        FolderItem item = new FolderItem(folderId, folder);
-                        resultList.add(item);
-                    }
-                }
-            }
-        }
 
-        // find recording item
-        List<Long> sourceFolderIds = new ArrayList<>();
-        if (mTargetSourceArray != null) {
-            for (String folder : mTargetSourceArray) {
-                long folderId = DatabaseUtils.getFolderId(mContentResolver, folder);
-                if (folderId != DatabaseUtils.NOT_FOUND) {
-                    sourceFolderIds.add(folderId);
-                }
+        Cursor cursor = DatabaseUtils.getFolderCursor(mContentResolver);
+        if (cursor != null) {
+            int len = cursor.getCount();
+            for (int i = 0; i < len; i++) {
+                cursor.moveToNext();
+                WeakReference<Cursor> cursorWeakReference = new WeakReference<>(cursor);
+                MediaItem item = new MediaItem(cursorWeakReference.get());
+                resultList.add(item);
             }
-        }
-
-        if (sourceFolderIds.size() > 0) {
-            Long ids[] = new Long[sourceFolderIds.size()];
-            sourceFolderIds.toArray(ids);
-            Cursor cursor = DatabaseUtils.getFolderCursor(mContentResolver, ids);
-            if (cursor != null) {
-                int len = cursor.getCount();
-                for (int i = 0; i < len; i++) {
-                    cursor.moveToNext();
-                    WeakReference<Cursor> cursorWeakReference = new WeakReference<>(cursor);
-                    MediaItem item = new MediaItem(cursorWeakReference.get());
-                    resultList.add(item);
-                }
-                cursor.close();
-            }
+            cursor.close();
         }
 
         // update list item to mItemsList.

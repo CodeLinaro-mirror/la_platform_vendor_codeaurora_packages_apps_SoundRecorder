@@ -279,4 +279,20 @@ public class DatabaseUtils {
                 null, MediaStore.Audio.Media.DATE_MODIFIED + " DESC");
     }
 
+
+    public static Cursor getFolderCursor(ContentResolver resolver) {
+        String[] projection = {
+                MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.DATA,
+                MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Files.FileColumns.PARENT
+        };
+
+        String selection = MediaStore.Audio.Media.IS_MUSIC + "=1" + " AND "
+                + MediaStore.Files.FileColumns.DATA + " LIKE "
+                + "\'" + StorageUtils.getPhoneStoragePath()+ "%\'";
+
+        return DatabaseUtils.query(resolver, FILE_BASE_URI, projection, selection.toString(),
+                null, MediaStore.Audio.Media.DATE_MODIFIED + " DESC");
+    }
+
 }

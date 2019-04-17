@@ -67,7 +67,7 @@ public class StorageUtils {
         try {
             if (context != null) {
                 STORAGE_PATH_EXTERNAL_FILES_DIR = context.getExternalFilesDir(
-                        Environment.DIRECTORY_MUSIC).getCanonicalPath();
+                        null).getCanonicalPath();
                 Log.d(TAG, "getExternalFilesDirPath =" + STORAGE_PATH_EXTERNAL_FILES_DIR);
             }
         } catch (IOException e) {

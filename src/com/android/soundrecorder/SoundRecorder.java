@@ -268,7 +268,7 @@ public class SoundRecorder extends Activity
 
     int mAudioSourceType = MediaRecorderWrapper.AudioSource.MIC;
     int mPhoneCount = 0;
-    private Hashtable<Integer, Integer> mCallStateMap = new Hashtable<Integer, Integer>();
+    private Hashtable<String, Integer> mCallStateMap = new Hashtable<String, Integer>();
     static int mCallState = TelephonyManager.CALL_STATE_IDLE;
     WakeLock mWakeLock;
     String mRequestedType = AUDIO_ANY;
@@ -311,11 +311,11 @@ public class SoundRecorder extends Activity
 
     private IntentFilter mMountFilter = new IntentFilter();
 
-    private PhoneStateListener getPhoneStateListener(int subId) {
-        PhoneStateListener phoneStateListener = new PhoneStateListener(subId) {
+    private PhoneStateListener getPhoneStateListener() {
+        PhoneStateListener phoneStateListener = new PhoneStateListener() {
             @Override
-            public void onCallStateChanged(int state, String ignored) {
-               mCallStateMap.put(this.mSubId, state);
+            public void onCallStateChanged(int state, String incomingNumber) {
+               mCallStateMap.put(incomingNumber+' ', state);
 
                switch (state) {
                       case TelephonyManager.CALL_STATE_IDLE:
@@ -462,7 +462,7 @@ public class SoundRecorder extends Activity
 
             // adapt case: disabled telephony feature or activate card failure
             if (null != subId && subId.length > 0) {
-                mPhoneStateListener[j] = getPhoneStateListener(subId[0]);
+                mPhoneStateListener[j] = getPhoneStateListener();
             } else {
                 mPhoneStateListener[j] = null;
             }
@@ -491,9 +491,11 @@ public class SoundRecorder extends Activity
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         for(int i = 0; i < mPhoneCount; i++) {
             // adapt case: disabled telephony feature or activate card failure
-            if (null != mPhoneStateListener[i]) {
-                mTelephonyManager.listen(mPhoneStateListener[i],
-                        PhoneStateListener.LISTEN_CALL_STATE);
+            int[] subId = SubscriptionManager.getSubId(i);
+            if (null != mPhoneStateListener[i] && (null != subId && subId.length > 0)) {
+                mTelephonyManager
+                    .createForSubscriptionId(subId[0])
+                    .listen(mPhoneStateListener[i], PhoneStateListener.LISTEN_CALL_STATE);
             }
         }
     }
@@ -1202,9 +1204,11 @@ public class SoundRecorder extends Activity
         // Stop listening for phone state changes.
         for(int i = 0; i < mPhoneCount; i++) {
             // adapt case: disabled telephony feature or activate card failure
-            if (null != mPhoneStateListener[i]) {
-                mTelephonyManager.listen(mPhoneStateListener[i],
-                        PhoneStateListener.LISTEN_NONE);
+            int[] subId = SubscriptionManager.getSubId(i);
+            if (null != mPhoneStateListener[i] && (null != subId && subId.length > 0)) {
+                mTelephonyManager
+                    .createForSubscriptionId(subId[0])
+                    .listen(mPhoneStateListener[i], PhoneStateListener.LISTEN_NONE);
             }
         }
         mRecorder.stop();

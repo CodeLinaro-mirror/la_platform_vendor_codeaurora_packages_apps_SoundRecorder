@@ -55,7 +55,7 @@ public class MediaItem extends BaseListItem {
     public MediaItem(Cursor cursor) {
         int idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
         int dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-        int titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+        int titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
         int durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
         int modifiedIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED);
         mId = cursor.getLong(idIndex);

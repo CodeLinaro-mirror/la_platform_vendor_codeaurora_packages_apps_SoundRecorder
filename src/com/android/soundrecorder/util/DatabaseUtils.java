@@ -177,6 +177,7 @@ public class DatabaseUtils {
         contentValues.put(MediaStore.Audio.Media.DATE_MODIFIED, (int) (date / 1000));
         contentValues.put(MediaStore.Audio.Media.DURATION, duration);
         contentValues.put(MediaStore.Audio.Media.TITLE, fileName);
+        contentValues.put(MediaStore.Audio.Media.DISPLAY_NAME, fileName);
         contentValues.put(MediaStore.Audio.Media.ALBUM,
                 res.getString(R.string.audio_db_album_name));
         contentValues.put(MediaStore.Audio.Media.MIME_TYPE, mimeType);
@@ -262,7 +263,7 @@ public class DatabaseUtils {
         }
         String[] projection = {
                 MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.DATA,
-                MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Files.FileColumns.PARENT
         };
 
@@ -283,7 +284,7 @@ public class DatabaseUtils {
     public static Cursor getFolderCursor(ContentResolver resolver) {
         String[] projection = {
                 MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.DATA,
-                MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Files.FileColumns.PARENT
         };
 

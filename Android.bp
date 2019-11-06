@@ -1,0 +1,39 @@
+// make wrapper static lib
+java_library {
+    name: "qti_soundrecorder_wrapper",
+    srcs: ["src-Wrapper/**/*.java"],
+
+    // support access hidden APIs
+    platform_apis: true,
+
+}
+
+android_app {
+    name: "QtiSoundRecorder",
+
+    srcs: ["**/*.java"],
+
+    resource_dirs: ["res"],
+
+    aaptflags: ["--auto-add-overlay"] + ["--extra-packages"] + ["androidx.recyclerview_recyclerview"],
+
+
+    static_libs: [
+        "androidx.recyclerview_recyclerview",
+        "androidx.core_core",
+        "qti_soundrecorder_wrapper",
+    ],
+
+    overrides: ["SoundRecorder"],
+
+    // support access hidden APIs
+    platform_apis: true,
+
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+
+    privileged: true,
+
+}
+

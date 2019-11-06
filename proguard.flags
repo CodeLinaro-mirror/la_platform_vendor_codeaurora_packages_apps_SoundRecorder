@@ -1,2 +1,2 @@
 #Avoid the library class dependency error
--dontwarn android.support.v7.recyclerview.*
+-keep class androidx.core.app.CoreComponentFactory

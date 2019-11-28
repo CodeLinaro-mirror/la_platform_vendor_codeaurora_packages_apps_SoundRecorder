@@ -3,8 +3,7 @@ java_library {
     name: "qti_soundrecorder_wrapper",
     srcs: ["src-Wrapper/**/*.java"],
 
-    // support access hidden APIs
-    platform_apis: true,
+    sdk_version: "current",
 
 }
 
@@ -26,8 +25,8 @@ android_app {
 
     overrides: ["SoundRecorder"],
 
-    // support access hidden APIs
-    platform_apis: true,
+    product_specific: true,
+    sdk_version: "current",
 
     optimize: {
         proguard_flags_files: ["proguard.flags"],

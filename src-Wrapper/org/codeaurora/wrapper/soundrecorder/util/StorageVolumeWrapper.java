@@ -57,11 +57,11 @@ public class StorageVolumeWrapper{
         mStorageVolume = vol;
     }
 
-    public static String getPath() {
+    public static String getPath(Context context) {
         String path = null;
 
         if (mStorageVolume != null) {
-            path = mStorageVolume.getPath();
+            path = mStorageVolume.getDescription(context);
         }else{
             Log.e(TAG, "getPath mStorageVolume is null");
         }

@@ -41,7 +41,6 @@ public class MediaRecorderWrapper {
 
         private AudioSource() {}
 
-        public final static int AUDIO_SOURCE_INVALID = MediaRecorder.AudioSource.AUDIO_SOURCE_INVALID;
 
         /** Default audio source **/
         public static final int DEFAULT = MediaRecorder.AudioSource.DEFAULT;
@@ -70,12 +69,6 @@ public class MediaRecorderWrapper {
 
         public static final int UNPROCESSED = MediaRecorder.AudioSource.UNPROCESSED;
 
-        /**
-         * Audio source for capturing broadcast radio tuner output.
-         */
-        public static final int RADIO_TUNER = MediaRecorder.AudioSource.RADIO_TUNER;
-
-        public static final int HOTWORD = MediaRecorder.AudioSource.HOTWORD;
     }
 
     public final class AudioEncoder {
@@ -132,14 +125,10 @@ public class MediaRecorderWrapper {
         /** AMR WB file format */
         public static final int AMR_WB = MediaRecorder.OutputFormat.AMR_WB;
 
-        /** AAC ADIF file format */
-        public static final int AAC_ADIF = MediaRecorder.OutputFormat.AAC_ADIF;
 
         /** AAC ADTS file format */
         public static final int AAC_ADTS = MediaRecorder.OutputFormat.AAC_ADTS;
 
-        /**  Stream over a socket, limited to a single stream */
-        public static final int OUTPUT_FORMAT_RTP_AVP = MediaRecorder.OutputFormat.OUTPUT_FORMAT_RTP_AVP;
 
         /** H.264/AAC data encapsulated in MPEG2/TS */
         public static final int OUTPUT_FORMAT_MPEG2TS = 8;//MediaRecorder.OutputFormat.OUTPUT_FORMAT_MPEG2TS;

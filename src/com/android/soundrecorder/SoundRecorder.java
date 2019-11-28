@@ -70,7 +70,6 @@ import com.android.soundrecorder.util.FileUtils;
 import com.android.soundrecorder.util.PermissionUtils;
 import com.android.soundrecorder.util.StorageUtils;
 import com.android.soundrecorder.util.Utils;
-import org.codeaurora.wrapper.soundrecorder.util.SystemPropertiesWrapper;
 import org.codeaurora.wrapper.soundrecorder.util.MediaRecorderWrapper;
 
 
@@ -461,7 +460,9 @@ public class SoundRecorder extends Activity
         mPhoneCount = mTelephonyManager.getPhoneCount();
         mPhoneStateListener = new PhoneStateListener[mPhoneCount];
         for(int j = 0; j < mPhoneCount; j++) {
-            int[] subId = SubscriptionManager.getSubId(j);
+            SubscriptionManager subscriptionManager = (SubscriptionManager) this
+                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            int[] subId = subscriptionManager.getSubscriptionIds(j);
 
             // adapt case: disabled telephony feature or activate card failure
             if (null != subId && subId.length > 0) {
@@ -471,8 +472,9 @@ public class SoundRecorder extends Activity
             }
         }
 
-        String ssrRet = SystemPropertiesWrapper.get("ro.vendor.qc.sdk.audio.ssr","false");
-        if (ssrRet.contains("true")) {
+        String SSR = "ro.vendor.qc.sdk.audio.ssr";
+        boolean ssrRet = Log.isLoggable(SSR, Log.DEBUG);
+        if (ssrRet) {
             Log.d(TAG,"Surround sound recording is supported");
             bSSRSupported = true;
         } else {
@@ -494,7 +496,9 @@ public class SoundRecorder extends Activity
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         for(int i = 0; i < mPhoneCount; i++) {
             // adapt case: disabled telephony feature or activate card failure
-            int[] subId = SubscriptionManager.getSubId(i);
+            SubscriptionManager subscriptionManager = (SubscriptionManager) this
+                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            int[] subId = subscriptionManager.getSubscriptionIds(i);
             if (null != mPhoneStateListener[i] && (null != subId && subId.length > 0)) {
                 mTelephonyManager
                     .createForSubscriptionId(subId[0])
@@ -977,7 +981,9 @@ public class SoundRecorder extends Activity
         menu.findItem(R.id.menu_item_filetype).setEnabled(
                 (mRecorder.state() == Recorder.IDLE_STATE) && (!mExitAfterRecord));
         menu.findItem(R.id.menu_item_storage).setEnabled(mRecorder.state() == Recorder.IDLE_STATE);
-        if (SystemPropertiesWrapper.getBoolean(VENDOR_SOUNDRECORDER_DEBUG_ENABLE, false)) {
+
+        boolean enable = Log.isLoggable(VENDOR_SOUNDRECORDER_DEBUG_ENABLE, Log.DEBUG);
+        if (enable) {
             menu.findItem(R.id.menu_item_keyboard).setVisible(true);
         } else {
             menu.findItem(R.id.menu_item_keyboard).setVisible(false);
@@ -1223,7 +1229,9 @@ public class SoundRecorder extends Activity
         // Stop listening for phone state changes.
         for(int i = 0; i < mPhoneCount; i++) {
             // adapt case: disabled telephony feature or activate card failure
-            int[] subId = SubscriptionManager.getSubId(i);
+            SubscriptionManager subscriptionManager = (SubscriptionManager) this
+                    .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            int[] subId = subscriptionManager.getSubscriptionIds(i);
             if (null != mPhoneStateListener[i] && (null != subId && subId.length > 0)) {
                 mTelephonyManager
                     .createForSubscriptionId(subId[0])
@@ -1495,7 +1503,9 @@ public class SoundRecorder extends Activity
                     if (true == bSSRSupported) {
                         mStateMessage2.setText(res.getString(R.string.press_record_ssr));
                     } else {
-                        if (SystemPropertiesWrapper.getBoolean(VENDOR_SOUNDRECORDER_DEBUG_ENABLE, false)) {
+                        boolean enable = Log.isLoggable(
+                            VENDOR_SOUNDRECORDER_DEBUG_ENABLE, Log.DEBUG);
+                        if (enable) {
                             mStateMessage2.setText(res.getString(R.string.press_record));
                         } else {
                             mStateMessage2.setText(res.getString(R.string.press_record2));

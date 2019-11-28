@@ -34,6 +34,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.util.Log;
 
+import java.util.List;
 import java.io.File;
 
 public class StorageManagerWrapper{
@@ -49,11 +50,14 @@ public class StorageManagerWrapper{
         return mStorageManager;
     }
 
-    public static StorageVolume[] getVolumeList(Context context) {
-        StorageVolume[] volumes = null;
+    public static List<StorageVolume> getVolumeList(Context context) {
+        List<StorageVolume> volumes = null;
 
         try {
-            volumes = getStorageManager(context).getVolumeList();
+            volumes = getStorageManager(context).getStorageVolumes();
+            for(StorageVolume volume : volumes){
+                Log.d(TAG, "getVolumeList volumes-path="+ volume.getDescription(context));
+            }
         } catch (Exception e) {
             Log.e(TAG, "couldn't talk to MountService", e);
         }
@@ -69,11 +73,12 @@ public class StorageManagerWrapper{
         String sdDirectory = null;
 
         try {
-            final StorageVolume[] volumes = StorageManagerWrapper.getVolumeList(context);
-            if (volumes.length > VOLUME_SDCARD_INDEX) {
-                StorageVolume volume = volumes[VOLUME_SDCARD_INDEX];
+            final List<StorageVolume> volumes = StorageManagerWrapper.getVolumeList(context);
+            if (volumes.size() > VOLUME_SDCARD_INDEX) {
+                StorageVolume volume = volumes.get(VOLUME_SDCARD_INDEX);
                 if (volume.isRemovable()) {
-                    sdDirectory = volume.getPath();
+                    //for compile, SdDirectory do not use the way by getPath()
+                    sdDirectory = volume.getDescription(context);
                 }
             }
         } catch (Exception e) {

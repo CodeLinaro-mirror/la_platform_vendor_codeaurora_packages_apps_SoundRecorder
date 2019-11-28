@@ -29,7 +29,6 @@
 
 package com.android.soundrecorder.util;
 
-import org.codeaurora.wrapper.soundrecorder.util.LongArrayWrapper;
 import android.content.Context;
 import android.net.Uri;
 
@@ -104,36 +103,6 @@ public class FileUtils {
 
     public static boolean exists(File file) {
         return file != null && file.exists();
-    }
-
-    public static long getSuitableIndexOfRecording(String prefix) {
-        long returnIndex = SAVE_FILE_START_INDEX;
-        File file = new File(StorageUtils.getPhoneStoragePath());
-        File list[] = file.listFiles();
-        LongArrayWrapper array = new LongArrayWrapper();
-        if (list != null && list.length != 0) {
-            for (File item : list) {
-                String name = getLastFileName(item, false);
-                if (name.startsWith(prefix)) {
-                    int index = prefix.length();
-                    String numString = name.substring(index, name.length());
-                    try {
-                        array.add(Long.parseLong(numString));
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        int size = array.size();
-        for (int i = 0; i < size; i++) {
-            if (array.indexOf(returnIndex) >= 0) {
-                returnIndex++;
-            }
-        }
-
-        return returnIndex;
     }
 
     public static boolean isFolderEmpty(String filePath) {

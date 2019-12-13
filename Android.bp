@@ -8,12 +8,12 @@ java_library {
 }
 
 prebuilt_etc {
-    name: "privapp-permissions-soundrecorder.xml",
+    name: "privapp_whitelist_com.android.soundrecorder",
 
     src: "privapp-permissions-soundrecorder.xml",
     sub_dir: "permissions",
     product_specific: true,
-
+    filename_from_src: true,
 }
 
 android_app {
@@ -31,6 +31,7 @@ android_app {
         "androidx.core_core",
         "qti_soundrecorder_wrapper",
     ],
+    required: ["privapp_whitelist_com.android.soundrecorder"],
 
     overrides: ["SoundRecorder"],
 

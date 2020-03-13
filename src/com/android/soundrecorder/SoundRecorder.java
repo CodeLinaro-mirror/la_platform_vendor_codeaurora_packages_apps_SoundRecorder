@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2020 The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project
@@ -1208,6 +1208,13 @@ public class SoundRecorder extends Activity
               Log.e(TAG, "### Selected mpegh_Enc : Key Event" + KeyEvent.KEYCODE_B);
               mRequestedType = AUDIO_MPEGH;
               mAudioOutputFormat = MediaRecorderWrapper.OutputFormat.MPEG_4;
+              ret = true;
+              break;
+            }
+            case KeyEvent.KEYCODE_C: // Skip AudioFocus
+            {
+              Log.e(TAG, "### Skipping AudioFocus request : Key Event" + KeyEvent.KEYCODE_C);
+              mRecorder.requestAudioFocus(false);
               ret = true;
               break;
             }

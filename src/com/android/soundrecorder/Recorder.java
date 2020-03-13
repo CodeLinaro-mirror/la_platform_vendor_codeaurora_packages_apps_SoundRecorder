@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2020 The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project
@@ -65,7 +65,7 @@ public class Recorder implements MediaRecorder.OnInfoListener {
     private int mBitRate = 0;
 
     public String mStoragePath = null;
-
+    private boolean mRequestAudioFocus = true;
     private int mMaxDuration;
 
     public interface OnStateChangedListener {
@@ -477,9 +477,16 @@ public class Recorder implements MediaRecorder.OnInfoListener {
      * the MediaPlaybackService to pause playback.
      */
     private void stopAudioPlayback() {
-        AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
-        am.requestAudioFocus(mAudioFocusListener,
-                AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        Log.i(TAG,"requestAudioFocus " + mRequestAudioFocus);
+        if (mRequestAudioFocus) {
+            AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+            am.requestAudioFocus(mAudioFocusListener,
+                    AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
+    }
+
+    public void requestAudioFocus(boolean state ) {
+        mRequestAudioFocus = state;
     }
 
     private OnAudioFocusChangeListener mAudioFocusListener =

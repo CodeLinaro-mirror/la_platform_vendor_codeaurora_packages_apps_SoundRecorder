@@ -1,3 +1,4 @@
+ifneq ($(TARGET_HAS_LOW_RAM),true)
 ifeq ($(TARGET_FWK_SUPPORTS_FULL_VALUEADDS),true)
 LOCAL_PATH:= $(call my-dir)
 
@@ -41,3 +42,4 @@ LOCAL_PRIVILEGED_MODULE := true
 
 include $(BUILD_PACKAGE)
 endif#TARGET_FWK_SUPPORTS_FULL_VALUEADDS
+endif

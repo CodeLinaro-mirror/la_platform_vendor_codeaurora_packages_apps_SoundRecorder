@@ -258,7 +258,6 @@ public class SoundRecorder extends Activity
     private AudioManager mAudioManager;
     private boolean mRecorderStop = false;
     private boolean mRecorderProcessed = false;
-    private boolean mDataExist = false;
     private boolean mWAVSupport = true;
     private boolean mExitAfterRecord = false;
     private boolean mIsGetContentAction = false;
@@ -443,7 +442,6 @@ public class SoundRecorder extends Activity
 
         mRecorderStop = false;
         mRecorderProcessed = false;
-        mDataExist = false;
 
         setResult(RESULT_CANCELED);
         registerExternalStorageListener();
@@ -1264,6 +1262,7 @@ public class SoundRecorder extends Activity
      */
     private boolean saveSample(boolean showToast) {
         Uri uri = null;
+        int id;
 
         if (mRecorder.sampleLength() <= 0) {
             mRecorder.delete();
@@ -1271,15 +1270,17 @@ public class SoundRecorder extends Activity
         }
 
         try {
-            mDataExist = DatabaseUtils.isDataExist(getContentResolver(), mRecorder.sampleFile());
-            if (!mDataExist) {
+            id = DatabaseUtils.getRecordingFileID(getContentResolver(), mRecorder.sampleFile());
+            if (id == DatabaseUtils.INVALID_ID) {
                 uri = DatabaseUtils.addToMediaDB(SoundRecorder.this, mRecorder.sampleFile(),
                         mRecorder.sampleLengthMillis(), mRequestedType);
+            }else{
+                uri = DatabaseUtils.buildRecordingUri(id);
             }
         } catch(UnsupportedOperationException ex) {  // Database manipulation failure
             return false;
         } finally {
-            if (uri == null && !mDataExist) {
+            if (uri == null) {
                 return false;
             }
         }

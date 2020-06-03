@@ -63,6 +63,8 @@ import android.widget.Toast;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.SubscriptionManager;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 
 import com.android.soundrecorder.util.DatabaseUtils;
 import com.android.soundrecorder.filelist.FileListActivity;
@@ -1277,6 +1279,7 @@ public class SoundRecorder extends Activity
             }else{
                 uri = DatabaseUtils.buildRecordingUri(id);
             }
+            scanFileIfNeeded(mRecorder.sampleFile(),mRequestedType);
         } catch(UnsupportedOperationException ex) {  // Database manipulation failure
             return false;
         } finally {
@@ -1698,5 +1701,48 @@ public class SoundRecorder extends Activity
                 }
             }
         });
+    }
+
+    private void scanFileIfNeeded(File file, String mimeType ) {
+        if (file != null) {
+            String filePath = file.getAbsolutePath();
+            new AudioFileScannerClient(this, filePath, mimeType);
+        } else {
+            Log.e(TAG, "scanFileIfNeeded  file is null");
+        }
+
+    }
+
+    private static class AudioFileScannerClient implements MediaScannerConnectionClient {
+
+        private MediaScannerConnection mConnection;
+        private Context mContext;
+        private String mFilePath;
+        private String mMimetype;
+
+
+        AudioFileScannerClient(Context context, String filePath, String mimeType) {
+            mContext = context;
+            mFilePath = filePath;
+            mMimetype = mimeType;
+            mConnection = new MediaScannerConnection(mContext, this);
+            mConnection.connect();
+        }
+
+        @Override
+        public void onMediaScannerConnected() {
+            mConnection.scanFile(mFilePath, mMimetype);
+        }
+
+        @Override
+        public void onScanCompleted(String path, Uri uri) {
+            if (uri != null) {
+               Log.e(TAG, "onScanCompleted  Uri is " + uri);
+            } else {
+               Log.e(TAG, "onScanCompleted failed ");
+            }
+
+            mConnection.disconnect();
+        }
     }
 }

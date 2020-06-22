@@ -36,6 +36,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -51,6 +52,9 @@ public class DatabaseUtils {
     public static final String VOLUME_NAME = "external";
     public static final int NOT_FOUND = -1;
     public static final Uri FILE_BASE_URI = Uri.parse("content://media/external/file");
+    public static final int INVALID_ID = -1;
+    private static final Uri AUDIO_FILE_URI = Uri
+            .parse("content://media/external/audio/media");
 
     /*
      * A simple utility to do a query into the databases.
@@ -133,7 +137,22 @@ public class DatabaseUtils {
         return uri;
     }
 
-    public static boolean isDataExist(ContentResolver resolver, File file) {
+
+   /*
+      * build a uri for a assigned recording file id
+     */
+    public static Uri buildRecordingUri(int id) {
+        if (id == INVALID_ID) {
+            return null;
+        }
+
+        Uri uri = ContentUris.withAppendedId(AUDIO_FILE_URI, id);
+        return uri;
+    }
+
+
+    public static int getRecordingFileID(ContentResolver resolver, File file) {
+        int id = INVALID_ID;
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         final String[] ids = new String[] {
                 MediaStore.Audio.Playlists._ID
@@ -145,10 +164,13 @@ public class DatabaseUtils {
         Cursor cursor = query(resolver, uri, ids, where, args, null);
 
         if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            if (!cursor.isAfterLast()) {
+                id = cursor.getInt(0);
+            }
             cursor.close();
-            return true;
         }
-        return false;
+        return id;
     }
 
     /*

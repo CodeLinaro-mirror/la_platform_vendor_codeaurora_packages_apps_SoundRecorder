@@ -63,6 +63,8 @@ import android.widget.Toast;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.SubscriptionManager;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 
 import com.android.soundrecorder.util.DatabaseUtils;
 import com.android.soundrecorder.filelist.FileListActivity;
@@ -258,7 +260,6 @@ public class SoundRecorder extends Activity
     private AudioManager mAudioManager;
     private boolean mRecorderStop = false;
     private boolean mRecorderProcessed = false;
-    private boolean mDataExist = false;
     private boolean mWAVSupport = true;
     private boolean mExitAfterRecord = false;
     private boolean mIsGetContentAction = false;
@@ -443,7 +444,6 @@ public class SoundRecorder extends Activity
 
         mRecorderStop = false;
         mRecorderProcessed = false;
-        mDataExist = false;
 
         setResult(RESULT_CANCELED);
         registerExternalStorageListener();
@@ -1264,6 +1264,7 @@ public class SoundRecorder extends Activity
      */
     private boolean saveSample(boolean showToast) {
         Uri uri = null;
+        int id;
 
         if (mRecorder.sampleLength() <= 0) {
             mRecorder.delete();
@@ -1271,15 +1272,18 @@ public class SoundRecorder extends Activity
         }
 
         try {
-            mDataExist = DatabaseUtils.isDataExist(getContentResolver(), mRecorder.sampleFile());
-            if (!mDataExist) {
+            id = DatabaseUtils.getRecordingFileID(getContentResolver(), mRecorder.sampleFile());
+            if (id == DatabaseUtils.INVALID_ID) {
                 uri = DatabaseUtils.addToMediaDB(SoundRecorder.this, mRecorder.sampleFile(),
                         mRecorder.sampleLengthMillis(), mRequestedType);
+            }else{
+                uri = DatabaseUtils.buildRecordingUri(id);
             }
+            scanFileIfNeeded(mRecorder.sampleFile(),mRequestedType);
         } catch(UnsupportedOperationException ex) {  // Database manipulation failure
             return false;
         } finally {
-            if (uri == null && !mDataExist) {
+            if (uri == null) {
                 return false;
             }
         }
@@ -1697,5 +1701,48 @@ public class SoundRecorder extends Activity
                 }
             }
         });
+    }
+
+    private void scanFileIfNeeded(File file, String mimeType ) {
+        if (file != null) {
+            String filePath = file.getAbsolutePath();
+            new AudioFileScannerClient(this, filePath, mimeType);
+        } else {
+            Log.e(TAG, "scanFileIfNeeded  file is null");
+        }
+
+    }
+
+    private static class AudioFileScannerClient implements MediaScannerConnectionClient {
+
+        private MediaScannerConnection mConnection;
+        private Context mContext;
+        private String mFilePath;
+        private String mMimetype;
+
+
+        AudioFileScannerClient(Context context, String filePath, String mimeType) {
+            mContext = context;
+            mFilePath = filePath;
+            mMimetype = mimeType;
+            mConnection = new MediaScannerConnection(mContext, this);
+            mConnection.connect();
+        }
+
+        @Override
+        public void onMediaScannerConnected() {
+            mConnection.scanFile(mFilePath, mMimetype);
+        }
+
+        @Override
+        public void onScanCompleted(String path, Uri uri) {
+            if (uri != null) {
+               Log.e(TAG, "onScanCompleted  Uri is " + uri);
+            } else {
+               Log.e(TAG, "onScanCompleted failed ");
+            }
+
+            mConnection.disconnect();
+        }
     }
 }

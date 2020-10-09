@@ -47,7 +47,7 @@ public class PermissionUtils {
     };
 
     private static String[] PLAY_PERMISSIONS = {
-            Manifest.permission.READ_EXTERNAL_STORAGE
+            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
     };
 
     public static String[] getOperationPermissions(PermissionType type) {

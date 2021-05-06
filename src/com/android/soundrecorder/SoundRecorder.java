@@ -231,6 +231,7 @@ public class SoundRecorder extends Activity
     static final String AUDIO_AAC_5POINT1_CHANNEL = "audio/aac_5point1_channel";
     static final String AUDIO_AMR_WB = "audio/amr-wb";
     static final String AUDIO_MPEGH = "audio/mhas";
+    static final String AUDIO_HDR = "audio/aac_hdr";
     static final String AUDIO_ANY = "audio/*";
     static final String ANY_ANY = "*/*";
 
@@ -732,6 +733,17 @@ public class SoundRecorder extends Activity
                     new StartRecordingTask().execute(new RecordingParams(
                             MediaRecorderWrapper.OutputFormat.THREE_GPP, ".aac", this,
                             mAudioSourceType, MediaRecorderWrapper.AudioEncoder.AAC));
+                } else if (AUDIO_HDR.equals(mRequestedType)) {
+                    mAudioManager.setParameters("hdr_record_on=true");
+                    mAudioManager.setParameters("hdr_audio_channel_count=4");
+                    mAudioManager.setParameters("hdr_audio_sampling_rate=48000");
+                    mAudioSourceType = MediaRecorderWrapper.AudioSource.UNPROCESSED;
+                    setBitRate(BITRATE_AAC);
+                    mRecorder.setSamplingRate(SAMPLERATE_MULTI_CH);
+                    mRecorder.setChannels(2);
+                    new StartRecordingTask().execute(new RecordingParams(
+                            MediaRecorderWrapper.OutputFormat.THREE_GPP, ".aac", this,
+                            mAudioSourceType, MediaRecorderWrapper.AudioEncoder.AAC));
                 } else if (AUDIO_AAC_5POINT1_CHANNEL.equals(mRequestedType)) {
                     //AAC  2-channel recording
                     if (true == bSSRSupported) {
@@ -901,6 +913,13 @@ public class SoundRecorder extends Activity
                                 break;
                             case R.string.format_setting_aac_item:
                                 mRequestedType = AUDIO_AAC_MP4;
+                                mFileType = 2;
+                                mPrefsStoragePathEditor.putString("requestedType", mRequestedType);
+                                mPrefsStoragePathEditor.putInt("fileType", mFileType);
+                                mPrefsStoragePathEditor.commit();
+                                break;
+                            case R.string.format_setting_hdr_item:
+                                mRequestedType = AUDIO_HDR;
                                 mFileType = 2;
                                 mPrefsStoragePathEditor.putString("requestedType", mRequestedType);
                                 mPrefsStoragePathEditor.putInt("fileType", mFileType);
@@ -1218,6 +1237,14 @@ public class SoundRecorder extends Activity
               ret = true;
               break;
             }
+            case KeyEvent.KEYCODE_D: // Selected HDR type
+            {
+              Log.e(TAG, "Selected AUDIO_HDR Codec: Key Event" + KeyEvent.KEYCODE_D);
+              mRequestedType = AUDIO_HDR;
+              ret = true;
+              break;
+            }
+
             default:
                 break;
         }
@@ -1228,6 +1255,10 @@ public class SoundRecorder extends Activity
     @Override
     public void onStop() {
         mRecorder.stop();
+        Log.d(TAG, "onStop - Reset HDR params");
+        mAudioManager.setParameters("hdr_record_on=false");
+        mAudioManager.setParameters("hdr_audio_channel_count=0");
+        mAudioManager.setParameters("hdr_audio_sampling_rate=0");
         super.onStop();
     }
 
@@ -1246,6 +1277,7 @@ public class SoundRecorder extends Activity
             }
         }
         mRecorder.stop();
+
         // if dialog is shown, dialog processing the logic.
         if (!mRenameDialogShown) {
             if (mRecorder.sampleLength() > 0) {

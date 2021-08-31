@@ -195,7 +195,6 @@ public class DatabaseUtils {
                 res.getString(R.string.audio_db_artist_name));
         contentValues.put(MediaStore.Audio.Media.DATE_ADDED, (int) (time / 1000));
         contentValues.put(MediaStore.Audio.Media.DATA, file.getAbsolutePath());
-        contentValues.put(MediaStore.Audio.Media.IS_MUSIC, "1");
         contentValues.put(MediaStore.Audio.Media.DATE_MODIFIED, (int) (date / 1000));
         contentValues.put(MediaStore.Audio.Media.DURATION, duration);
         contentValues.put(MediaStore.Audio.Media.TITLE, fileName);
@@ -289,8 +288,8 @@ public class DatabaseUtils {
                 MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Files.FileColumns.PARENT
         };
 
-        String selection = MediaStore.Audio.Media.IS_MUSIC + "=1" + " AND "
-                + MediaStore.Files.FileColumns.PARENT + "=";
+        String selection = MediaStore.Audio.Media.DURATION + ">1" + " AND "
+        + MediaStore.Files.FileColumns.PARENT + "=";
         StringBuilder allSelection = new StringBuilder();
         for (int i = 0; i < folderIds.length; i++) {
             if (i != 0) {
@@ -310,8 +309,8 @@ public class DatabaseUtils {
                 MediaStore.Audio.Media.DATE_MODIFIED, MediaStore.Files.FileColumns.PARENT
         };
 
-        String selection = MediaStore.Audio.Media.IS_MUSIC + "=1" + " AND "
-                + MediaStore.Files.FileColumns.DATA + " LIKE "
+        String selection = MediaStore.Audio.Media.DURATION + ">1" + " AND "
+        + MediaStore.Files.FileColumns.DATA + " LIKE "
                 + "\'" + StorageUtils.getPhoneStoragePath()+ "%\'";
 
         return DatabaseUtils.query(resolver, FILE_BASE_URI, projection, selection.toString(),

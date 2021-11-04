@@ -59,5 +59,10 @@
             android:label="@string/file_list_activity_label"
             android:theme="@style/FileListActivity">
         </activity>
+
+        <activity android:name="com.android.soundrecorder.util.PermissionUtils"
+                  android:launchMode="singleTask">
+        </activity>
+
     </application>
 </manifest>

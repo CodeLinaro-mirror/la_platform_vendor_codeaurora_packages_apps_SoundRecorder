@@ -242,6 +242,8 @@ public class SoundRecorder extends Activity
     static final int SETTING_TYPE_STORAGE_LOCATION = 0;
     static final int SETTING_TYPE_FILE_TYPE = 1;
 
+    public static final int OPERATION_RECORD = 100;
+
     static final int BITRATE_AMR = 12800; // bits/sec
     static final int BITRATE_AAC = 156000;
     static final int BITRATE_EVRC = 8500;
@@ -305,6 +307,7 @@ public class SoundRecorder extends Activity
     VUMeter mVUMeter;
     private BroadcastReceiver mSDCardMountEventReceiver = null;
     private BroadcastReceiver mPowerOffReceiver = null;
+    private BroadcastReceiver mMountReceiver = null;
     private TelephonyManager mTelephonyManager;
     private PhoneStateListener[] mPhoneStateListener;
     private int mFileType = 0;
@@ -313,7 +316,6 @@ public class SoundRecorder extends Activity
     private SharedPreferences mSharedPreferences;
     private Editor mPrefsStoragePathEditor;
 
-    private IntentFilter mMountFilter = new IntentFilter();
 
     private PhoneStateListener getPhoneStateListener() {
         PhoneStateListener phoneStateListener = new PhoneStateListener() {
@@ -353,30 +355,57 @@ public class SoundRecorder extends Activity
         return phoneStateListener;
     }
 
-    private BroadcastReceiver mMountReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (mPath == StorageUtils.STORAGE_PATH_PHONE_INDEX
-                    && StorageUtils.isPhoneStorageMounted()) {
-                mErrorUiMessage = null;
-                updateUi();
-            } else if (mPath == StorageUtils.STORAGE_PATH_SD_INDEX
-                    && StorageUtils.isSdMounted(SoundRecorder.this)) {
-                mErrorUiMessage = null;
-                mSdExist = true;
-                updateUi();
-            } else if (StorageUtils.isSdMounted(SoundRecorder.this) &&
-                    !StorageUtils.diskSpaceAvailable(SoundRecorder.this, mPath)) {
-                mSampleInterrupted = true;
-                mErrorUiMessage = getResources().getString(R.string.storage_is_full);
-                updateUi();
-            }
+    private void registerMountListener() {
+        if (mMountReceiver == null) {
+            mMountReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (mPath == StorageUtils.STORAGE_PATH_PHONE_INDEX
+                            && StorageUtils.isPhoneStorageMounted()) {
+                        mErrorUiMessage = null;
+                        updateUi();
+                    } else if (mPath == StorageUtils.STORAGE_PATH_SD_INDEX
+                            && StorageUtils.isSdMounted(SoundRecorder.this)) {
+                        mErrorUiMessage = null;
+                        mSdExist = true;
+                        updateUi();
+                    } else if (StorageUtils.isSdMounted(SoundRecorder.this) &&
+                            !StorageUtils.diskSpaceAvailable(SoundRecorder.this, mPath)) {
+                        mSampleInterrupted = true;
+                        mErrorUiMessage = getResources().getString(R.string.storage_is_full);
+                        updateUi();
+                    }
+                }
+            };
+
+            IntentFilter mountFilter = new IntentFilter();
+            mountFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+            mountFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+            mountFilter.addDataScheme("file");
+            registerReceiver(mMountReceiver, mountFilter);
         }
-    };
+    }
+
 
     @Override
     public void onCreate(Bundle icycle) {
         super.onCreate(icycle);
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] permissions = getOperationPermissionName(OPERATION_RECORD);
+            if (PermissionUtils.checkAndRequestPermission(this, permissions)) {
+                Log.e(TAG,"Permission not granted!");
+                finish();
+                return;
+            }
+        }
+
+        init(icycle);
+
+    }
+
+
+    public void init(Bundle icycle) {
         if (getResources().getBoolean(R.bool.config_storage_path)) {
             mStoragePath = StorageUtils.applyCustomStoragePath(this);
         }
@@ -483,10 +512,7 @@ public class SoundRecorder extends Activity
             bSSRSupported = false;
         }
 
-        mMountFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
-        mMountFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
-        mMountFilter.addDataScheme("file");
-        registerReceiver(mMountReceiver, mMountFilter);
+        registerMountListener();
         updateUi();
     }
 
@@ -564,20 +590,14 @@ public class SoundRecorder extends Activity
 
     private String[] getOperationPermissionName(int operation) {
         switch (operation) {
-        case R.id.recordButton:
+        case OPERATION_RECORD:
             return PermissionUtils.getOperationPermissions(PermissionUtils.PermissionType.RECORD);
         default:
             return null;
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                int[] grantResults) {
-        if (PermissionUtils.checkPermissionResult(permissions, grantResults)) {
-            processClickEvent(requestCode);
-        }
-    }
+
 
     /*
      * Handle the buttons.
@@ -585,13 +605,8 @@ public class SoundRecorder extends Activity
     public void onClick(View button) {
         if (!button.isEnabled())
             return;
-        if (Build.VERSION.SDK_INT >= 23) {
-            String[] permissions = getOperationPermissionName(button.getId());
-            if (PermissionUtils.checkPermissions(this, permissions, button.getId()))
-                processClickEvent(button.getId());
-        } else {
-            processClickEvent(button.getId());
-        }
+
+        processClickEvent(button.getId());
     }
 
     private Handler mMsgHandler = new Handler() {
@@ -1398,7 +1413,11 @@ public class SoundRecorder extends Activity
             unregisterReceiver(mPowerOffReceiver);
             mPowerOffReceiver = null;
         }
-        unregisterReceiver(mMountReceiver);
+
+        if (mMountReceiver != null) {
+            unregisterReceiver(mMountReceiver);
+            mMountReceiver = null;
+        }
 
         if (null != mProgressDialog && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();

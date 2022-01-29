@@ -395,8 +395,6 @@ public class SoundRecorder extends Activity
             String[] permissions = getOperationPermissionName(OPERATION_RECORD);
             if (PermissionUtils.checkAndRequestPermission(this, permissions)) {
                 Log.e(TAG,"Permission not granted!");
-                finish();
-                return;
             }
         }
 
@@ -1139,6 +1137,9 @@ public class SoundRecorder extends Activity
             return super.dispatchKeyEvent(event);
         }
     }
+        // reset audio source type to MIC
+        mAudioSourceType = MediaRecorderWrapper.AudioSource.MIC;
+
         // Intercept some events before they get dispatched to our views.
         boolean ret = false;
         switch (event.getKeyCode()) {

@@ -172,6 +172,11 @@ public class PermissionUtils extends Activity{
         }
 
         if(isAllPermissionsGranted) {
+            if (mPreviousIntent != null){
+                Intent intent = new Intent();
+                intent.setClass(this, SoundRecorder.class);
+                startActivity(intent);
+            }
             finish();
         } else {
             showMissingPermissionDialog();

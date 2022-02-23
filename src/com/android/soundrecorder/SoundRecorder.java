@@ -395,6 +395,8 @@ public class SoundRecorder extends Activity
             String[] permissions = getOperationPermissionName(OPERATION_RECORD);
             if (PermissionUtils.checkAndRequestPermission(this, permissions)) {
                 Log.e(TAG,"Permission not granted!");
+                finish();
+                return;
             }
         }
 

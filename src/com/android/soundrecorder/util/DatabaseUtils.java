@@ -234,7 +234,7 @@ public class DatabaseUtils {
         return uri;
     }
 
-    public static void rename(Context context, File file, File newFile) {
+    public static void rename(Context context, File file, File newFile, long id) {
         ContentResolver resolver = context.getContentResolver();
         String title = FileUtils.getLastFileName(newFile, false);
 
@@ -242,10 +242,8 @@ public class DatabaseUtils {
         cv.put(MediaStore.Audio.Media.TITLE, title);
         cv.put(MediaStore.Audio.Media.DISPLAY_NAME, title);
         cv.put(MediaStore.Audio.Media.DATA, newFile.getAbsolutePath());
-
-        Uri base = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        String where = MediaStore.Audio.Media.DATA + " = \'" + file.getAbsolutePath() + "\'";
-        resolver.update(base, cv, where, null);
+        Uri base = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+        resolver.update(base, cv, null, null);
     }
 
     public static void delete(Context context, File file) {

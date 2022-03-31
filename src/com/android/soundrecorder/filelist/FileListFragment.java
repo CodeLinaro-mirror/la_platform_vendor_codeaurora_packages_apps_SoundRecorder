@@ -332,7 +332,7 @@ public class FileListFragment extends Fragment {
                         // rename file.
                         File newFile = FileUtils.renameFile(file, newName);
                         // update database.
-                        DatabaseUtils.rename(getContext(), file, newFile);
+                        DatabaseUtils.rename(getContext(), file, newFile, item.getId());
 
                         item.setPath(newFile.getAbsolutePath());
                         // update list item.

@@ -65,11 +65,11 @@ public class PermissionUtils extends Activity{
     private static String[] RECORD_PERMISSIONS = {
             Manifest.permission.READ_PHONE_STATE, Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAPTURE_AUDIO_OUTPUT,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
+            Manifest.permission.READ_MEDIA_AUDIO
     };
 
     private static String[] PLAY_PERMISSIONS = {
-            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
+            Manifest.permission.READ_MEDIA_AUDIO
     };
 
     @Override

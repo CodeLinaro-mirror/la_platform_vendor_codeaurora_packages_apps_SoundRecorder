@@ -29,7 +29,11 @@
 
 package com.android.soundrecorder.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import android.content.Context;
+import android.util.Log;
 
 import com.android.soundrecorder.R;
 
@@ -50,5 +54,30 @@ public class Utils {
             timerFormat = context.getResources().getString(R.string.timer_format);
             return String.format(timerFormat, minutes, second);
         }
+    }
+
+    public static String getSystemProperties(String name) {
+        Method systemPropertiesGetMethod;
+        try {
+            Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
+            if (systemPropertiesClass == null) {
+                return null;
+            }
+            systemPropertiesGetMethod = systemPropertiesClass.getMethod("get", String.class);
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            Log.e("SoundRecorder", "unable to access system class", e);
+            return null;
+        }
+
+        if (systemPropertiesGetMethod == null) {
+            return null;
+        }
+
+        try {
+            return (String) systemPropertiesGetMethod.invoke(null, name);
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+            Log.e("SoundRecorder", "unable to invoke system method", e);
+        }
+        return null;
     }
 }

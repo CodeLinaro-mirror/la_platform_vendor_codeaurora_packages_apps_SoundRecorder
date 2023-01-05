@@ -25,6 +25,8 @@ import java.util.Hashtable;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -65,6 +67,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.SubscriptionManager;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
+import android.text.TextUtils;
 
 import com.android.soundrecorder.util.DatabaseUtils;
 import com.android.soundrecorder.filelist.FileListActivity;
@@ -265,6 +268,7 @@ public class SoundRecorder extends Activity
     private boolean mIsGetContentAction = false;
     private boolean mSdExist = true;
     private boolean mRenameDialogShown = false;
+    private boolean mForceScoOn = false;
 
     private ProgressDialog mProgressDialog;
     private final int MSG_DISMISS_PROGRESS_DIALOG = 1100;
@@ -373,6 +377,34 @@ public class SoundRecorder extends Activity
         }
     };
 
+    private int mChangedState = -1;
+    private int mUpdatedState = -1;
+    private int mUpdatedPrevState = -1;
+    private BroadcastReceiver mSCOAudioStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                Log.e(TAG, "BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED: " + state);
+            } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED)) {
+                mChangedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+                Log.e(TAG, "ACTION_SCO_AUDIO_STATE_CHANGED: " + mChangedState);
+                if (AudioManager.SCO_AUDIO_STATE_CONNECTED == mChangedState) {
+                    Toast.makeText(context, R.string.bt_sco_audio_connected, Toast.LENGTH_SHORT).show();
+                }
+            } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)) {
+                mUpdatedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+                mUpdatedPrevState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1);
+                if (mForceScoOn && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+                    mForceScoOn = false;
+                    mAudioManager.setBluetoothScoOn(false);
+                    mAudioManager.stopBluetoothSco();
+                }
+            }
+        }
+    };
+
     @Override
     public void onCreate(Bundle icycle) {
         super.onCreate(icycle);
@@ -448,6 +480,7 @@ public class SoundRecorder extends Activity
         setResult(RESULT_CANCELED);
         registerExternalStorageListener();
         registerPowerOffListener();
+        registerSCOAudioListener();
         if (icycle != null) {
             Bundle recorderState = icycle.getBundle(RECORDER_STATE_KEY);
             if (recorderState != null) {
@@ -504,6 +537,11 @@ public class SoundRecorder extends Activity
                     .createForSubscriptionId(subId[0])
                     .listen(mPhoneStateListener[i], PhoneStateListener.LISTEN_CALL_STATE);
             }
+        }
+        mForceScoOn = TextUtils.equals(Utils.getSystemProperties("debug.bt_sco_record"), "1");
+        if (mForceScoOn) {
+            mAudioManager.setBluetoothScoOn(true);
+            mAudioManager.startBluetoothSco();
         }
     }
 
@@ -1256,6 +1294,11 @@ public class SoundRecorder extends Activity
             }
         }
         super.onPause();
+        if (mForceScoOn) {
+            mForceScoOn = false;
+            mAudioManager.setBluetoothScoOn(false);
+            mAudioManager.stopBluetoothSco();
+        }
     }
 
     /*
@@ -1367,6 +1410,7 @@ public class SoundRecorder extends Activity
             mPowerOffReceiver = null;
         }
         unregisterReceiver(mMountReceiver);
+        unregisterReceiver(mSCOAudioStatusReceiver);
 
         if (null != mProgressDialog && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
@@ -1429,6 +1473,14 @@ public class SoundRecorder extends Activity
             iFilter.addDataScheme("file");
             registerReceiver(mSDCardMountEventReceiver, iFilter);
         }
+    }
+
+    private void registerSCOAudioListener() {
+        IntentFilter iFilter = new IntentFilter();
+        iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+        iFilter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
+        registerReceiver(mSCOAudioStatusReceiver, iFilter);
     }
 
     /**

@@ -258,6 +258,7 @@ public class SoundRecorder extends Activity
     static final int SAMPLERATE_8000 = 8000;
     static final long STOP_WAIT = 300;
     static final long BACK_KEY_WAIT = 400;
+    static final int MAX_TRY_COUNT = 5;
     int mAudioOutputFormat = MediaRecorderWrapper.OutputFormat.AMR_WB;
     String mAmrWidebandExtension = ".awb";
     private AudioManager mAudioManager;
@@ -270,6 +271,7 @@ public class SoundRecorder extends Activity
     private boolean mRenameDialogShown = false;
     private boolean mForceScoOn = false;
     private boolean mScoOn = false;
+    private static boolean mIsOnMediaScan = false;
 
     private ProgressDialog mProgressDialog;
     private final int MSG_DISMISS_PROGRESS_DIALOG = 1100;
@@ -1412,6 +1414,7 @@ public class SoundRecorder extends Activity
     }
 
     private void startListActivity() {
+        waitAudioFileScanner();
         Intent intent = new Intent(SoundRecorder.this, FileListActivity.class);
         startActivity(intent);
     }
@@ -1791,6 +1794,23 @@ public class SoundRecorder extends Activity
 
     }
 
+    private void waitAudioFileScanner() {
+        for (int i = 0; i < MAX_TRY_COUNT; i++) {
+            Log.d("TAG", "waitAudioFileScanner mIsOnMediaScan:" + mIsOnMediaScan + ", try:" + i);
+            if (!mIsOnMediaScan) {
+                return;
+            }
+            waitForCheck();
+        }
+    }
+
+    private void waitForCheck() {
+        try {
+            Thread.sleep(200);
+        } catch (Exception e) {
+        }
+    }
+
     private static class AudioFileScannerClient implements MediaScannerConnectionClient {
 
         private MediaScannerConnection mConnection;
@@ -1809,6 +1829,7 @@ public class SoundRecorder extends Activity
 
         @Override
         public void onMediaScannerConnected() {
+            mIsOnMediaScan = true;
             mConnection.scanFile(mFilePath, mMimetype);
         }
 
@@ -1820,6 +1841,7 @@ public class SoundRecorder extends Activity
                Log.e(TAG, "onScanCompleted failed ");
             }
 
+            mIsOnMediaScan = false;
             mConnection.disconnect();
         }
     }

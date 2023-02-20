@@ -110,4 +110,5 @@
     <string name="file_discard">File has been discarded</string>
     <string name="title_please_wait">Please wait... </string>
     <string name="msg_starting_recording">Starting recording</string>
+    <string name="bt_sco_audio_connected">SCO_AUDIO connected.</string>
 </resources>

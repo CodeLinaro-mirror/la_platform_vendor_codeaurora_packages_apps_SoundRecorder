@@ -269,6 +269,7 @@ public class SoundRecorder extends Activity
     private boolean mSdExist = true;
     private boolean mRenameDialogShown = false;
     private boolean mForceScoOn = false;
+    private boolean mScoOn = false;
 
     private ProgressDialog mProgressDialog;
     private final int MSG_DISMISS_PROGRESS_DIALOG = 1100;
@@ -387,6 +388,24 @@ public class SoundRecorder extends Activity
             if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
                 int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
                 Log.e(TAG, "BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED: " + state);
+            } else if (action.equals(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: " + state);
+                if (state == BluetoothProfile.STATE_CONNECTED) {
+                    // BluetoothHeadset connect
+                    if (mForceScoOn && !mScoOn) {
+                        mScoOn = true;
+                        mAudioManager.setBluetoothScoOn(true);
+                        mAudioManager.startBluetoothSco();
+                    }
+                } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
+                    // BluetoothHeadset disconnect
+                    if(mForceScoOn && mScoOn) {
+                        mScoOn = false;
+                        mAudioManager.setBluetoothScoOn(false);
+                        mAudioManager.stopBluetoothSco();
+                    }
+                }
             } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED)) {
                 mChangedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
                 Log.e(TAG, "ACTION_SCO_AUDIO_STATE_CHANGED: " + mChangedState);
@@ -396,8 +415,13 @@ public class SoundRecorder extends Activity
             } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)) {
                 mUpdatedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
                 mUpdatedPrevState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1);
-                if (mForceScoOn && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
-                    mForceScoOn = false;
+                Log.d(TAG, "ACTION_SCO_AUDIO_STATE_UPDATED  mUpdatedState: " + mUpdatedState
+                        + "; mUpdatedPrevState: " + mUpdatedPrevState);
+                // startBluetoothSco failed
+                if (mForceScoOn && mScoOn
+                        && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED
+                        && mUpdatedPrevState == AudioManager.SCO_AUDIO_STATE_CONNECTING) {
+                    mScoOn = false;
                     mAudioManager.setBluetoothScoOn(false);
                     mAudioManager.stopBluetoothSco();
                 }
@@ -540,6 +564,7 @@ public class SoundRecorder extends Activity
         }
         mForceScoOn = TextUtils.equals(Utils.getSystemProperties("debug.bt_sco_record"), "1");
         if (mForceScoOn) {
+            mScoOn = true;
             mAudioManager.setBluetoothScoOn(true);
             mAudioManager.startBluetoothSco();
         }
@@ -1294,8 +1319,8 @@ public class SoundRecorder extends Activity
             }
         }
         super.onPause();
-        if (mForceScoOn) {
-            mForceScoOn = false;
+        if (mForceScoOn && mScoOn) {
+            mScoOn = false;
             mAudioManager.setBluetoothScoOn(false);
             mAudioManager.stopBluetoothSco();
         }
@@ -1480,6 +1505,7 @@ public class SoundRecorder extends Activity
         iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
         iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
         iFilter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
+        iFilter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(mSCOAudioStatusReceiver, iFilter);
     }
 

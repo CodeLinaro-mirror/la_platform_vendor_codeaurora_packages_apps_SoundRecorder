@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/**
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+-->
+<resources>
+    <array name="sample_rate_values">
+        <item>8000 Hz</item>
+        <item>11025 Hz</item>
+        <item>12000 Hz</item>
+        <item>16000 Hz</item>
+        <item>22050 Hz</item>
+        <item>24000 Hz</item>
+        <item>32000 Hz</item>
+        <item>44100 Hz</item>
+        <item>48000 Hz</item>
+    </array>
+
+    <array name="bit_rate_values">
+        <item>4 Kbps</item>
+        <item>8 Kbps</item>
+        <item>32 Kbps</item>
+        <item>48 Kbps</item>
+        <item>96 Kbps</item>
+        <item>128 Kbps</item>
+        <item>192 Kbps</item>
+        <item>256 Kbps</item>
+        <item>320 Kbps</item>
+        <item>384 Kbps</item>
+    </array>
+
+    <array name="channel_values">
+        <item>Mono</item>
+        <item>Stereo</item>
+
+    </array>
+
+    <array name="output_format_values">
+        <item>RAW_AMR</item>
+        <item>THREE_GPP</item>
+        <item>MPEG_4</item>
+        <item>AMR_WB</item>
+        <item>QCP</item>
+        <item>WAVE</item>
+
+    </array>
+
+    <array name="codec_values">
+        <item>AMR_NB</item>
+        <item>AMR_WB</item>
+        <item>AAC_LC</item>
+        <item>HE_AAC_V1</item>
+        <item>HE_AAC_V2</item>
+        <item>LPCM</item>
+    </array>
+
+</resources>

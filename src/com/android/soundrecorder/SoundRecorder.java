@@ -1535,6 +1535,8 @@ public class SoundRecorder extends Activity
                         int codec = intent.getIntExtra(ConfigUtil.KEY_CODEC, -1);
 
                         if (bitrate != -1) {
+                            mRemainingTimeCalculator.setBitRate(mConfigUtil.getBitRate(bitrate));
+                            mRecorder.setDynamicBitRate(mConfigUtil.getBitRate(bitrate));
                             mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_BITRATE, bitrate);
                         }
                         if (sampleRate != -1) {

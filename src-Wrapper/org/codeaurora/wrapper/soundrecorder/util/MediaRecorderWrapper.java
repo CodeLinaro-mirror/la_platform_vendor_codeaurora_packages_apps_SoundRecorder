@@ -27,6 +27,10 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 package org.codeaurora.wrapper.soundrecorder.util;
 
 import android.media.MediaRecorder;
@@ -97,6 +101,8 @@ public class MediaRecorderWrapper {
         public static final int LPCM = 12;//MediaRecorder.AudioEncoder.LPCM;
         /**  MPEGH audio codec */
         public static final int MPEGH = 13;//MediaRecorder.AudioEncoder.MPEGH;
+
+        public static final int HE_AAC_V2 = 8; //MediaRecorder.AudioEncoder.HE_AAC_PS;
     }
 
     public final class OutputFormat {

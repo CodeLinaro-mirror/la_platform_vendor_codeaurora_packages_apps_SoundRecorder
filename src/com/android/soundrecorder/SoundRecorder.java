@@ -40,7 +40,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -308,6 +307,7 @@ public class SoundRecorder extends Activity
     private BroadcastReceiver mSDCardMountEventReceiver = null;
     private BroadcastReceiver mPowerOffReceiver = null;
     private BroadcastReceiver mMountReceiver = null;
+    private BroadcastReceiver mCommandReceiver = null;
     private TelephonyManager mTelephonyManager;
     private PhoneStateListener[] mPhoneStateListener;
     private int mFileType = 0;
@@ -315,7 +315,8 @@ public class SoundRecorder extends Activity
     private String mStoragePath = StorageUtils.getPhoneStoragePath();
     private SharedPreferences mSharedPreferences;
     private Editor mPrefsStoragePathEditor;
-
+    private ConfigUtil mConfigUtil;
+    private ImageButton mSettingsButton;
 
     private PhoneStateListener getPhoneStateListener() {
         PhoneStateListener phoneStateListener = new PhoneStateListener() {
@@ -478,6 +479,7 @@ public class SoundRecorder extends Activity
         setResult(RESULT_CANCELED);
         registerExternalStorageListener();
         registerPowerOffListener();
+        registerCommandBroadcastReceiver();
         if (icycle != null) {
             Bundle recorderState = icycle.getBundle(RECORDER_STATE_KEY);
             if (recorderState != null) {
@@ -514,6 +516,7 @@ public class SoundRecorder extends Activity
 
         registerMountListener();
         updateUi();
+        mConfigUtil = new ConfigUtil(this);
     }
 
     @Override
@@ -582,7 +585,10 @@ public class SoundRecorder extends Activity
                 startListActivity();
             }
         });
-
+        mSettingsButton = findViewById(R.id.settingsButton);
+        mSettingsButton.setOnClickListener(v -> {
+            startSettingsActivity();
+        });
         mTimerFormat = getResources().getString(R.string.timer_format);
 
         mVUMeter.setRecorder(mRecorder);
@@ -715,7 +721,26 @@ public class SoundRecorder extends Activity
                     mAudioSourceType = MediaRecorderWrapper.AudioSource.VOICE_UPLINK;
                     Log.e(TAG, "Selected Voice Tx only Source: sourcetype" + mAudioSourceType);
                 }
-                if (AUDIO_AMR.equals(mRequestedType)) {
+                if (mSharedPreferences.getBoolean(ConfigUtil.KEY_USE_CUSTOM_CONFIG, false)) {
+                    int bitRate = mConfigUtil.getBitRate(
+                            mSharedPreferences.getInt(ConfigUtil.KEY_BITRATE, 0));
+                    int sampleRate = mConfigUtil.getSampleRate(
+                            mSharedPreferences.getInt(ConfigUtil.KEY_SAMPLE_RATE, 0));
+                    int channel =  mConfigUtil.getChannel(
+                            mSharedPreferences.getInt(ConfigUtil.KEY_CHANNEL, 0));
+
+                    mConfigUtil.updateConfigs(
+                            mSharedPreferences.getInt(ConfigUtil.KEY_CODEC, 0));
+                    int outputFormat = mConfigUtil.getOutputFormat();
+                    String extName = mConfigUtil.getExtName();
+                    int codec = mConfigUtil.getCodec();
+                    mRemainingTimeCalculator.setBitRate(bitRate);
+                    mRecorder.setChannels(channel);
+                    mRecorder.setSamplingRate(sampleRate);
+                    new StartRecordingTask().execute(new RecordingParams(
+                            outputFormat, extName, this,
+                            mAudioSourceType, codec));
+                } else if (AUDIO_AMR.equals(mRequestedType)) {
                     mRemainingTimeCalculator.setBitRate(BITRATE_AMR);
                     mRecorder.setChannels(1);
                     mRecorder.setSamplingRate(SAMPLERATE_8000);
@@ -1263,7 +1288,6 @@ public class SoundRecorder extends Activity
             default:
                 break;
         }
-
         return ret?ret:super.dispatchKeyEvent(event);
     }
 
@@ -1395,6 +1419,11 @@ public class SoundRecorder extends Activity
         startActivity(intent);
     }
 
+    private void startSettingsActivity() {
+        Intent intent = new Intent(SoundRecorder.this, SettingsActivity.class);
+        startActivity(intent);
+    }
+
     private void showSavedToast() {
         String info = getResources().getString(R.string.file_saved_interrupt);
         Toast.makeText(SoundRecorder.this, info, Toast.LENGTH_SHORT).show();
@@ -1417,6 +1446,11 @@ public class SoundRecorder extends Activity
         if (mMountReceiver != null) {
             unregisterReceiver(mMountReceiver);
             mMountReceiver = null;
+        }
+
+        if (mCommandReceiver != null) {
+            unregisterReceiver(mCommandReceiver);
+            mCommandReceiver = null;
         }
 
         if (null != mProgressDialog && mProgressDialog.isShowing()) {
@@ -1479,6 +1513,52 @@ public class SoundRecorder extends Activity
             iFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
             iFilter.addDataScheme("file");
             registerReceiver(mSDCardMountEventReceiver, iFilter);
+        }
+    }
+
+    private static final String COMMAND_INTENT = "recorder_command_intent";
+    private void registerCommandBroadcastReceiver() {
+        if (mCommandReceiver == null) {
+            mCommandReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String action = intent.getAction();
+                    if (action.equals(COMMAND_INTENT)) {
+                        int useCommand = intent.getIntExtra(
+                                ConfigUtil.KEY_USE_CUSTOM_CONFIG, -1);
+                        int bitrate = intent.getIntExtra(
+                                ConfigUtil.KEY_BITRATE, -1);
+                        int sampleRate = intent.getIntExtra(
+                                ConfigUtil.KEY_SAMPLE_RATE, -1);
+                        int channel = intent.getIntExtra(
+                                ConfigUtil.KEY_CHANNEL, -1);
+                        int codec = intent.getIntExtra(ConfigUtil.KEY_CODEC, -1);
+
+                        if (bitrate != -1) {
+                            mRemainingTimeCalculator.setBitRate(mConfigUtil.getBitRate(bitrate));
+                            mRecorder.setDynamicBitRate(mConfigUtil.getBitRate(bitrate));
+                            mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_BITRATE, bitrate);
+                        }
+                        if (sampleRate != -1) {
+                            mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_SAMPLE_RATE, sampleRate);
+                        }
+                        if (channel != -1) {
+                            mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_CHANNEL, channel);
+                        }
+                        if (codec != -1) {
+                            mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_CODEC, codec);
+                        }
+                        if (useCommand != -1) {
+                            mPrefsStoragePathEditor.putBoolean(ConfigUtil.KEY_USE_CUSTOM_CONFIG,
+                                    useCommand != 0);
+                        }
+                        mPrefsStoragePathEditor.commit();
+                    }
+                }
+            };
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(COMMAND_INTENT);
+            registerReceiver(mCommandReceiver, filter);
         }
     }
 
@@ -1605,9 +1685,13 @@ public class SoundRecorder extends Activity
                 if (mIsGetContentAction) {
                     mListButton.setEnabled(false);
                     mListButton.setFocusable(false);
+                    mSettingsButton.setEnabled(false);
+                    mSettingsButton.setFocusable(false);
                 } else {
                     mListButton.setEnabled(true);
                     mListButton.setFocusable(true);
+                    mSettingsButton.setEnabled(true);
+                    mSettingsButton.setFocusable(true);
                 }
                 break;
             case Recorder.RECORDING_STATE:
@@ -1618,6 +1702,8 @@ public class SoundRecorder extends Activity
                 mStopButton.setFocusable(true);
                 mListButton.setEnabled(false);
                 mListButton.setFocusable(false);
+                mSettingsButton.setEnabled(false);
+                mSettingsButton.setFocusable(false);
 
                 mStateMessage1.setVisibility(View.VISIBLE);
                 mStateMessage2.setVisibility(View.VISIBLE);
@@ -1634,6 +1720,8 @@ public class SoundRecorder extends Activity
                 mStopButton.setFocusable(true);
                 mListButton.setEnabled(false);
                 mListButton.setFocusable(false);
+                mSettingsButton.setEnabled(false);
+                mSettingsButton.setFocusable(false);
 
                 mStateMessage1.setVisibility(View.VISIBLE);
                 mStateMessage2.setVisibility(View.VISIBLE);

@@ -27,7 +27,11 @@
   OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-
+<!--
+Changes from Qualcomm Innovation Center are provided under the following license:
+Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
 <resources>
     <style name="MediaButtonSmallLeft" parent="MediaButtonSmall">
         <item name="android:layout_marginTop">@dimen/media_panel_margin_bottom</item>
@@ -56,5 +60,10 @@
         <item name="android:layout_marginTop">@dimen/vumeter_layout_margin</item>
         <item name="android:layout_marginEnd">@dimen/vumeter_layout_margin</item>
         <item name="android:layout_marginBottom">@dimen/vumeter_layout_margin_minus</item>
+    </style>
+    <style name="MediaButtonSmallSettings" parent="MediaButtonSmall">
+        <item name="android:layout_alignParentEnd">true</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:layout_centerVertical">true</item>
     </style>
 </resources>

@@ -734,7 +734,7 @@ public class SoundRecorder extends Activity
                     int outputFormat = mConfigUtil.getOutputFormat();
                     String extName = mConfigUtil.getExtName();
                     int codec = mConfigUtil.getCodec();
-                    mRemainingTimeCalculator.setBitRate(bitRate);
+                    setBitRate(bitRate);
                     mRecorder.setChannels(channel);
                     mRecorder.setSamplingRate(sampleRate);
                     new StartRecordingTask().execute(new RecordingParams(
@@ -1535,14 +1535,17 @@ public class SoundRecorder extends Activity
                         int codec = intent.getIntExtra(ConfigUtil.KEY_CODEC, -1);
 
                         if (bitrate != -1) {
+                            bitrate = mConfigUtil.checkBitRateIndex(bitrate, true);
                             mRemainingTimeCalculator.setBitRate(mConfigUtil.getBitRate(bitrate));
                             mRecorder.setDynamicBitRate(mConfigUtil.getBitRate(bitrate));
                             mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_BITRATE, bitrate);
                         }
                         if (sampleRate != -1) {
+                            sampleRate = mConfigUtil.checkSampleRateIndex(sampleRate, true);
                             mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_SAMPLE_RATE, sampleRate);
                         }
                         if (channel != -1) {
+                            channel = mConfigUtil.checkChannelIndex(channel, true);
                             mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_CHANNEL, channel);
                         }
                         if (codec != -1) {
@@ -1553,6 +1556,7 @@ public class SoundRecorder extends Activity
                                     useCommand != 0);
                         }
                         mPrefsStoragePathEditor.commit();
+                        mConfigUtil.loadConfig(true);
                     }
                 }
             };

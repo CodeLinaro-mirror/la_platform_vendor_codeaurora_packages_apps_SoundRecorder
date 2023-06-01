@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
@@ -23,8 +22,6 @@ public class SettingsActivity extends Activity {
     private int mBitRateIndex, mSampleRatesIndex, mChannelIndex, mOutputFormatIndex, mCodecIndex;
     private CheckBox mCustomConfigView;
     private boolean mUseCustomConfig;
-    private ConfigUtil mConfigUtil;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,8 +54,6 @@ public class SettingsActivity extends Activity {
         loadConfig();
         setListener();
         updateUI();
-        mConfigUtil = new ConfigUtil(this);
-        updateOptions(true);
     }
 
     private void loadConfig() {
@@ -120,7 +115,6 @@ public class SettingsActivity extends Activity {
             } else if (parent == mCodecView) {
                 mCodecIndex = position;
             }
-            updateOptions(false);
             saveConfig();
         }
         @Override
@@ -128,62 +122,4 @@ public class SettingsActivity extends Activity {
 
         }
     };
-
-    private void updateOptions(boolean isInit) {
-        int bitRate = mConfigUtil.getBitRate(mBitRateIndex);
-        int sampleRate = mConfigUtil.getSampleRate(mSampleRatesIndex);
-        mConfigUtil.updateConfigOptions(mCodecIndex, mSampleRatesIndex, mChannelIndex);
-        if (shouldUpdateSpinner(mBitRatesView, mConfigUtil.getSupportedBitRateArray())) {
-            ArrayAdapter<String> bitAdapter = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    mConfigUtil.getSupportedBitRateArray());
-            int bitRateIndex = mBitRateIndex;
-            mBitRatesView.setAdapter(bitAdapter);
-            if (isInit) {
-                mBitRatesView.setSelection(bitRateIndex);
-            }
-        }
-        if (shouldUpdateSpinner(mSampleRatesView, mConfigUtil.getSupportedSampleArray())) {
-            ArrayAdapter<String> sampleAdapter = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    mConfigUtil.getSupportedSampleArray());
-            int sampleRateIndex = mSampleRatesIndex;
-            mSampleRatesView.setAdapter(sampleAdapter);
-            if (isInit) {
-                mSampleRatesView.setSelection(sampleRateIndex);
-            }
-        }
-        if (mConfigUtil.getSupportedChannelArray().length != mChannelView.getCount()) {
-            ArrayAdapter<String> channelAdapter = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    mConfigUtil.getSupportedChannelArray());
-            mChannelView.setAdapter(channelAdapter);
-        }
-        int newBitRateIndex = mConfigUtil.getBitRateIndex(bitRate);
-        if (newBitRateIndex >= 0 && newBitRateIndex != mBitRateIndex) {
-            mBitRateIndex = newBitRateIndex;
-            mBitRatesView.setSelection(mBitRateIndex);
-        }
-        int newSampleRateIndex = mConfigUtil.getSampleRateIndex(sampleRate);
-        if (newSampleRateIndex >= 0 && newSampleRateIndex != mSampleRatesIndex) {
-            mSampleRatesIndex = newSampleRateIndex;
-            mSampleRatesView.setSelection(mSampleRatesIndex);
-        }
-        if (mConfigUtil.getSupportedChannelArray().length == 1 && mChannelIndex > 0) {
-            mChannelIndex = 0;
-            mChannelView.setSelection(0);
-        }
-    }
-
-    private boolean shouldUpdateSpinner(Spinner view, String[] arrays) {
-        if (view.getCount() != arrays.length) {
-            return true;
-        }
-        for (int i = 0; i < arrays.length; i++) {
-            if (!arrays[i].equals(view.getItemAtPosition(i).toString())) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

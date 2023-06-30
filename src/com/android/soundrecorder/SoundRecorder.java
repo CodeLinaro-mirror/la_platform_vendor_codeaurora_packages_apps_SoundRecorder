@@ -1558,7 +1558,7 @@ public class SoundRecorder extends Activity
             };
             IntentFilter filter = new IntentFilter();
             filter.addAction(COMMAND_INTENT);
-            registerReceiver(mCommandReceiver, filter);
+            registerReceiver(mCommandReceiver, filter, Context.RECEIVER_EXPORTED);
         }
     }
 

@@ -64,5 +64,10 @@
                   android:launchMode="singleTask">
         </activity>
 
+        <activity android:name=".SettingsActivity"
+            android:theme="@style/FileListActivity"
+            android:exported="false">
+        </activity>
+
     </application>
 </manifest>

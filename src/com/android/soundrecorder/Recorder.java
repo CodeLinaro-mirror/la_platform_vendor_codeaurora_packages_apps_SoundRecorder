@@ -152,6 +152,13 @@ public class Recorder implements MediaRecorder.OnInfoListener {
         mBitRate = bitRate;
     }
 
+    public void setDynamicBitRate(int bitRate) {
+        mBitRate = bitRate;
+        if (mBitRate > 0 && mRecorder != null) {
+            mRecorder.setAudioEncodingBitRate(mBitRate);
+        }
+    }
+
     public int state() {
         return mState;
     }

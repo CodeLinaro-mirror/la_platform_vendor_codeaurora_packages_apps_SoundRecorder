@@ -17,6 +17,7 @@
     <style name="Theme.SoundRecorder" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <item name="android:windowCloseOnTouchOutside">true</item>
         <item name="android:colorPrimaryDark">@color/color_primary_dark</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
         <item name="android:colorAccent">@color/color_accent</item>
     </style>
     <style name="MediaButton">

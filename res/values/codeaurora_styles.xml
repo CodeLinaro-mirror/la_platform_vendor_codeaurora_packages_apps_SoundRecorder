@@ -33,6 +33,7 @@
         <item name="android:windowActionBar">true</item>
         <item name="android:windowNoTitle">false</item>
         <item name="android:actionBarStyle">@style/FileListActionBar</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
         <item name="android:colorAccent">@color/list_activity_color_accent</item>
         <item name="android:colorPrimary">@color/list_activity_color_primary</item>
         <item name="android:colorPrimaryDark">@color/list_activity_color_primary_dark</item>

@@ -29,7 +29,14 @@
 
 package com.android.soundrecorder.util;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.TypedValue;
+
+import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.android.soundrecorder.R;
 
@@ -50,5 +57,26 @@ public class Utils {
             timerFormat = context.getResources().getString(R.string.timer_format);
             return String.format(timerFormat, minutes, second);
         }
+    }
+
+    public static void setUpEdgeToEdge(@NonNull Activity activity) {
+        ViewCompat.setOnApplyWindowInsetsListener(activity.findViewById(android.R.id.content),
+                (v, windowInsets) -> {
+                    Insets insets = windowInsets.getInsets(
+                            WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
+                    int statusBarHeight = activity.getWindow().getDecorView().getRootWindowInsets()
+                            .getInsets(WindowInsetsCompat.Type.statusBars()).top;
+                    int actionBarHeight = 0;
+                    TypedValue tv = new TypedValue();
+                    if (activity.getTheme().resolveAttribute(
+                            android.R.attr.actionBarSize, tv, true))
+                    {
+                        actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                                tv.data,activity.getResources().getDisplayMetrics());
+                    }
+                    v.setPadding(insets.left, statusBarHeight + actionBarHeight,
+                            insets.right, insets.bottom);
+                    return WindowInsetsCompat.CONSUMED;
+                });
     }
 }

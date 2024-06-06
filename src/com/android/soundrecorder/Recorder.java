@@ -20,14 +20,24 @@
 package com.android.soundrecorder;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.hardware.common.Ashmem;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.ServiceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.media.AudioManager;
@@ -37,6 +47,11 @@ import android.os.Message;
 
 import com.android.soundrecorder.util.FileUtils;
 import com.android.soundrecorder.util.StorageUtils;
+import com.android.soundrecorder.util.Utils;
+
+import vendor.qti.hardware.c2pa.C2PADataType;
+import vendor.qti.hardware.c2pa.C2PADataTypePair;
+import vendor.qti.hardware.c2pa.IC2PA;
 
 public class Recorder implements MediaRecorder.OnInfoListener {
     static final String TAG = "Recorder";
@@ -89,6 +104,10 @@ public class Recorder implements MediaRecorder.OnInfoListener {
     MediaRecorder mRecorder = null;
     private AudioManager mAudioManager;
     Context mContext = null;
+    SharedPreferences mSharedPreferences;
+
+    vendor.qti.hardware.c2pa.IC2PA mFactoryAidl = null;
+    IBinder mBinder;
 
     public Recorder(Context context) {
         if (context.getResources().getBoolean(R.bool.config_storage_path)) {
@@ -98,6 +117,10 @@ public class Recorder implements MediaRecorder.OnInfoListener {
         }
         mContext = context;
         mAudioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+        mSharedPreferences = mContext.getSharedPreferences("storage_Path", Context.MODE_PRIVATE);
+        if (mContext.getResources().getBoolean(R.bool.c2pa_feature_enabled)) {
+            mFactoryAidl = Utils.getC2paService();
+        }
     }
 
     public Recorder() {
@@ -390,6 +413,10 @@ public class Recorder implements MediaRecorder.OnInfoListener {
             mSampleLength = mSampleLength + (System.currentTimeMillis() - mSampleStart);
         }
         setState(IDLE_STATE);
+        if (mFactoryAidl != null
+                && mSharedPreferences.getBoolean(ConfigUtil.KEY_C2PA_ENABLED, false)) {
+            signC2PA();
+        }
     }
 
 
@@ -496,6 +523,52 @@ public class Recorder implements MediaRecorder.OnInfoListener {
         mRequestAudioFocus = state;
     }
 
+    private void signC2PA() {
+        if (!mSampleFile.exists()) {
+            Log.e(TAG,"signC2PA mSampleFile not found");
+            return;
+        }
+        try {
+            File file = mSampleFile;
+            ByteBuffer buffer = FileUtils.readFileToByteBuffer(mSampleFile);
+            Ashmem ashmem = FileUtils.getDataInAshmemObj(buffer);
+            List<C2PADataTypePair> configParams = Utils.getConfigParams(1);
+            List<C2PADataTypePair> assertions = new ArrayList<C2PADataTypePair>();
+            Ashmem outAshmem = new Ashmem();
+            Log.d(TAG,"signC2PA signC2PA now! ashmem size =  " + ashmem.size);
+            int response =
+                    mFactoryAidl.signMedia(ashmem, configParams, assertions, outAshmem);
+            Log.d(TAG,"signC2PA response = " + response);
+            Log.d(TAG,"signC2PA outAshmem.size = " + outAshmem.size);
+            if (outAshmem.size > 0) {
+                writeC2PASignedAudioFile(outAshmem.fd, file);
+            }
+        } catch (Exception e) {
+            Log.e(TAG,"signC2PA failed " + e);
+            e.printStackTrace();
+        }
+    }
+
+    private void writeC2PASignedAudioFile(ParcelFileDescriptor pfd, File file) {
+        try (FileInputStream fileInputStream = new FileInputStream(pfd.getFileDescriptor());
+             FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fileInputStream.read(buffer)) != -1) {
+                fileOutputStream.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "writeC2PASignedAudioFile failed");
+        }
+    }
+
+    public boolean isC2paEnabled() {
+        return mContext.getResources().getBoolean(R.bool.c2pa_feature_enabled)
+                && mFactoryAidl != null
+                && mSharedPreferences.getBoolean(ConfigUtil.KEY_C2PA_ENABLED, false);
+    }
+
     private OnAudioFocusChangeListener mAudioFocusListener =
         new OnAudioFocusChangeListener() {
             public void onAudioFocusChange(int focusChange) {
@@ -527,5 +600,4 @@ public class Recorder implements MediaRecorder.OnInfoListener {
             }
         }
     };
-
 }

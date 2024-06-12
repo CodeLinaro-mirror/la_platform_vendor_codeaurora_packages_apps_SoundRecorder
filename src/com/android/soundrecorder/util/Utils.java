@@ -31,6 +31,9 @@ package com.android.soundrecorder.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.IBinder;
+import android.os.ServiceManager;
+import android.util.Log;
 import android.util.TypedValue;
 
 import androidx.annotation.NonNull;
@@ -40,9 +43,19 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.android.soundrecorder.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import vendor.qti.hardware.c2pa.C2PADataType;
+import vendor.qti.hardware.c2pa.C2PADataTypePair;
+import vendor.qti.hardware.c2pa.IC2PA;
+
 public class Utils {
     static final int SECOND_PER_MINUTES = 60;
     static final int SECOND_PER_HOUR = 60 * SECOND_PER_MINUTES;
+    static vendor.qti.hardware.c2pa.IC2PA mFactoryAidl = null;
+    static IBinder mBinder;
+    static final String TAG = Utils.class.getSimpleName();
 
     public static String timeToString(Context context, long time) {
         long hour = time / SECOND_PER_HOUR;
@@ -78,5 +91,41 @@ public class Utils {
                             insets.right, insets.bottom);
                     return WindowInsetsCompat.CONSUMED;
                 });
+    }
+
+    public static void connectC2PAService() {
+        try {
+            Log.d(TAG, "Call C2PA getService");
+            String ISERVICE_INTERFACE = "vendor.qti.hardware.c2pa.IC2PA/default";
+            if (ServiceManager.isDeclared(ISERVICE_INTERFACE)){
+                mBinder = ServiceManager.waitForService(ISERVICE_INTERFACE);
+                mFactoryAidl = IC2PA.Stub.asInterface(mBinder);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "C2PA not supported: " + e);
+        }
+        if ( mFactoryAidl == null) {
+            Log.e(TAG, "C2PA returned null");
+            return;
+        }
+    }
+
+    public static vendor.qti.hardware.c2pa.IC2PA getC2paService() {
+        if (mFactoryAidl == null) {
+            connectC2PAService();
+        }
+        return mFactoryAidl;
+    }
+
+    public static List<C2PADataTypePair> getConfigParams(int type) {
+        List<C2PADataTypePair> configParams = new ArrayList<C2PADataTypePair>();
+        C2PADataTypePair outPair = new C2PADataTypePair();
+        C2PADataType c2PADataType;
+        outPair.key = "MEDIA_TYPE";
+        c2PADataType = new C2PADataType();
+        c2PADataType.setIntValue(type);
+        outPair.value = c2PADataType;
+        configParams.add(outPair);
+        return configParams;
     }
 }

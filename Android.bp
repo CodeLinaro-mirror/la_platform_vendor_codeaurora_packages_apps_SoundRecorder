@@ -35,13 +35,14 @@ android_app {
         "qti_soundrecorder_wrapper",
         "androidx-constraintlayout_constraintlayout",
         "gson",
+        "vendor.qti.hardware.c2pa-V1-java",
     ],
     required: ["privapp_whitelist_com.android.soundrecorder"],
 
     overrides: ["SoundRecorder"],
 
-    product_specific: true,
-    sdk_version: "current",
+    system_ext_specific: true,
+    platform_apis: true,
 
     optimize: {
         proguard_flags_files: ["proguard.flags"],

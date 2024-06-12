@@ -5,15 +5,14 @@
 package com.android.soundrecorder;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.location.Address;
-import android.location.Geocoder;
-import android.os.Build;
+import android.hardware.common.Ashmem;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -22,17 +21,32 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.soundrecorder.c2pa.C2PAAdapter;
+import com.android.soundrecorder.util.FileUtils;
 import com.android.soundrecorder.util.Utils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.TimeZone;
+
+import vendor.qti.hardware.c2pa.C2PADataType;
+import vendor.qti.hardware.c2pa.C2PADataTypePair;
 
 public class C2PAActivity extends Activity {
 
     public static final String C2PA_REPORT = "c2pa_report";
+    private static final String TAG = C2PAActivity.class.getSimpleName();
+    private ArrayList<Item> mItemList = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +54,37 @@ public class C2PAActivity extends Activity {
         Utils.setUpEdgeToEdge(this);
         setTitle("C2PA Details");
         Intent intent = getIntent();
+        int fd = intent.getIntExtra(C2PA_REPORT, -1);
+        ParcelFileDescriptor pfd = null;
+        try {
+            pfd = ParcelFileDescriptor.fromFd(fd);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        parseFileDescriptor(pfd);
+    }
+
+    public void parseFileDescriptor(ParcelFileDescriptor parcelFileDescriptor) {
+        try (FileInputStream fileInputStream = new FileInputStream(
+                parcelFileDescriptor.getFileDescriptor())) {
+            Log.d(TAG, "parseFileDescriptor size = " + fileInputStream.available());
+            StringBuilder stringBuilder = new StringBuilder();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fileInputStream.read(buffer)) != -1) {
+                stringBuilder.append(new String(buffer, 0, length, StandardCharsets.UTF_8));
+            }
+            String jsonString = stringBuilder.toString();
+            // Log.d(TAG, "parseFileDescriptor jsonString = " + jsonString);
+            if (jsonString != null && !jsonString.isEmpty()) {
+                parseJson(jsonString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void parseJson(String jsonString) {
     }
 
     @Override

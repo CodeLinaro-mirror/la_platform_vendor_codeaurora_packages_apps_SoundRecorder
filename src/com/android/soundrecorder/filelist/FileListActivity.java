@@ -37,6 +37,7 @@ import com.android.soundrecorder.R;
 import com.android.soundrecorder.filelist.player.Player;
 import com.android.soundrecorder.filelist.player.PlayerPanel;
 import com.android.soundrecorder.util.PermissionUtils;
+import com.android.soundrecorder.util.Utils;
 
 public class FileListActivity extends Activity {
     private Player mPlayer;
@@ -44,6 +45,7 @@ public class FileListActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_list_activity);
+        Utils.setUpEdgeToEdge(this);
         PlayerPanel playerPanel = (PlayerPanel) findViewById(R.id.player_panel);
         mPlayer = new Player(getApplicationContext(), playerPanel);
 

@@ -14,6 +14,8 @@ import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
+import com.android.soundrecorder.util.Utils;
+
 public class SettingsActivity extends Activity {
     private Spinner mBitRatesView, mSampleRatesView, mChannelView, mCodecView;
     private Spinner[] mSpinners;
@@ -26,6 +28,7 @@ public class SettingsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_activity);
+        Utils.setUpEdgeToEdge(this);
         setTitle("Settings");
         initView();
     }

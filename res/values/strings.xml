@@ -12,6 +12,26 @@
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      See the License for the specific language governing permissions and
      limitations under the License.
+
+     Copyright (c) 2024 Truepic
+
+     Permission is hereby granted, free of charge, to any person obtaining a copy
+     of this software and associated documentation files (the "Software"), to deal
+     in the Software without restriction, including without limitation the rights
+     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+     copies of the Software, and to permit persons to whom the Software is
+     furnished to do so, subject to the following conditions:
+
+     The above copyright notice and this permission notice shall be included in all
+     copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+     SOFTWARE.
 -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
@@ -118,4 +138,48 @@
     <string name="dialog_button_quit">Quit</string>
     <string name="dialog_button_settings">Settings</string>
 
+    <!-- values for c2pa -->
+    <string name="back">Back</string>
+    <string name="feed">Feed</string>
+    <string name="empty_gallery_title">Welcome to Lens!</string>
+    <string name="empty_gallery_desc">To start capturing photos, tap the camera button or choose to upload images from your mobile device.</string>
+    <string name="menu">Menu</string>
+    <string name="image_thumbnail">Image thumbnail</string>
+    <string name="lens">Lens</string>
+    <string name="truepic_presents">Truepic presents</string>
+    <string name="let_s_begin">Let\'s Begin</string>
+    <string name="no_network_title">Offline mode</string>
+    <string name="no_network_message">Please connect to the internet to view details.</string>
+    <string name="no_network_cancel">Cancel</string>
+    <string name="no_network_settings">Go to settings</string>
+    <string name="c2pa_info_title">Content Credentials</string>
+    <string name="c2pa_info_captured">Captured</string>
+    <string name="c2pa_info_captured_with">Captured with</string>
+    <string name="c2pa_info_created">Created</string>
+    <string name="c2pa_info_created_with">Created with</string>
+    <string name="c2pa_info_location">Location</string>
+    <string name="c2pa_info_signed_by">Signed by</string>
+    <string name="c2pa_info_signed_with">Signed with</string>
+    <string name="c2pa_info_na">N/A</string>
+    <string name="content_history">Content History</string>
+    <string name="c2pa_info_ai">Contains AI-generated content</string>
+    <string name="c2pa_info_thumbnail_type_photo">Photo</string>
+    <string name="c2pa_info_thumbnail_type_image">Image</string>
+    <string name="c2pa_info_thumbnail_type_video">Video</string>
+    <string name="c2pa_info_thumbnail_type_audio">Audio</string>
+    <string name="c2pa_info_thumbnail_desc_original">Original</string>
+    <string name="c2pa_info_thumbnail_desc_modified">Modified</string>
+    <string name="c2pa_info_thumbnail_desc_creative_work">Creative Work</string>
+    <string name="c2pa_info_modifications">Modifications</string>
+    <string name="back_content_desc">Back</string>
+    <string name="verification_output">Verification Output</string>
+    <string name="close">Close</string>
+    <string name="nav_drawer_title">Settings</string>
+    <string name="settings_logout">Logout</string>
+    <string name="play_content_description">Play</string>
+    <string name="file_picker_error">Failed to choose a file!</string>
+    <string name="file_picker_type_error">Not an image or video!</string>
+    <string name="import_file">Import File</string>
+    <string name="c2pa_invalid_hash">Content credentials cannot be displayed because this file has been edited without signing.</string>
+    <string name="c2pa_invalid_signature">Content credentials cannot be displayed because this file has been signed by an unknown source.</string>
 </resources>

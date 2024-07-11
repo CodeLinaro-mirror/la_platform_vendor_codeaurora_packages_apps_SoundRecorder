@@ -19,7 +19,10 @@ prebuilt_etc {
 android_app {
     name: "QtiSoundRecorder",
 
-    srcs: ["**/*.java"],
+    srcs: [
+        "**/*.java",
+        "**/*.kt",
+    ],
 
     resource_dirs: ["res"],
 
@@ -30,6 +33,8 @@ android_app {
         "androidx.recyclerview_recyclerview",
         "androidx.core_core",
         "qti_soundrecorder_wrapper",
+        "androidx-constraintlayout_constraintlayout",
+        "gson",
     ],
     required: ["privapp_whitelist_com.android.soundrecorder"],
 

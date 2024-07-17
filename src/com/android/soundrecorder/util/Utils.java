@@ -42,6 +42,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.android.soundrecorder.R;
+import com.google.gson.Gson;
+import com.truepic.lensverify.data.c2padata.C2PAData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,5 +129,10 @@ public class Utils {
         outPair.value = c2PADataType;
         configParams.add(outPair);
         return configParams;
+    }
+
+    public static C2PAData jsonToC2PAData(String json) {
+        Gson gson = new Gson();
+        return gson.fromJson(json, C2PAData.class);
     }
 }

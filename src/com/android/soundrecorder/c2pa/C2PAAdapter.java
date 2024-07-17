@@ -41,7 +41,48 @@ public class C2PAAdapter extends RecyclerView.Adapter<C2PAAdapter.C2PAViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull C2PAViewHolder holder, int position) {
+        C2PAActivity.Item item = mItems.get(position);
+        holder.title.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
+        holder.progress.setVisibility(View.VISIBLE);
+        if (item.getThumbnail() != null) {
+            holder.thumbnail.setImageBitmap(item.getThumbnail());
+        } else {
+            int imageResource = mContext.getResources().getIdentifier(
+                    "@drawable/no_thumbnail_audio", null, mContext.getPackageName());
+            holder.thumbnail.setImageResource(imageResource);
+        }
+        if (item.getAddress() != null) {
+            holder.location_label.setVisibility(View.VISIBLE);
+            holder.location_text.setVisibility(View.VISIBLE);
+            holder.location_text.setText(item.getAddress());
+        } else {
+            holder.location_label.setVisibility(View.GONE);
+            holder.location_text.setVisibility(View.GONE);
+        }
+        holder.thumbnail_desc.setText(item.getDescriptor());
+        holder.thumbnail_type.setText(item.getTypeLabel());
+        holder.captured_with_label.setText(item.getCapturedWithLabel());
+        holder.captured_with_text.setText(item.getCapturedWith());
+        holder.captured_label.setText(item.getCapturedLabel());
+        holder.ai_warning.setVisibility((item.isAiGenerated() && (
+                !item.getDescriptor().equals("Original"))) ? View.VISIBLE : View.GONE);
+        if (item.getModifications() > 0) {
+            holder.modifications_label.setVisibility(View.VISIBLE);
+            holder.modifications_text.setVisibility(View.VISIBLE);
+            holder.modifications_text.setText(String.valueOf(item.getModifications()));
+            holder.signed_with_label.setVisibility(View.GONE);
+            holder.signed_with_text.setVisibility(View.GONE);
+        } else {
+            holder.modifications_label.setVisibility(View.GONE);
+            holder.modifications_text.setVisibility(View.GONE);
+            holder.signed_with_label.setVisibility(View.VISIBLE);
+            holder.signed_with_text.setVisibility(View.VISIBLE);
+        }
 
+        holder.captured_text.setText(item.getCapturedDateText());
+        holder.signed_by_text.setText(item.getSignedByText());
+        holder.signed_with_text.setText(item.getSignedWithText());
+        holder.progress.setVisibility(View.GONE);
     }
 
     @Override

@@ -115,6 +115,193 @@ public class C2PAActivity extends Activity {
         ArrayList<Item> list = new ArrayList<>();
         List<ManifestStore> reversedManifests = presenter.getManifests();
         Collections.reverse(reversedManifests);
+        for (ManifestStore manifestStore : reversedManifests) {
+            Item item = new Item(
+                    getAddress(this, manifestStore),
+                    presenter.getThumbnail(manifestStore, 200),
+                    presenter.getDescriptor(manifestStore),
+                    presenter.getType(),
+                    presenter.getTypeLabel(),
+                    presenter.getCapturedWith(manifestStore),
+                    presenter.getCapturedWithLabel(manifestStore),
+                    presenter.getCapturedLabel(manifestStore),
+                    presenter.isAiGenerated(manifestStore),
+                    presenter.getModifications(manifestStore),
+                    presenter.getCapturedDate(manifestStore),
+                    presenter.getSignedBy(manifestStore),
+                    presenter.getSignedWith(manifestStore)
+            );
+            list.add(item);
+        }
+
+        C2PAAdapter adapter = new C2PAAdapter(list, this);
+
+        RecyclerView recyclerView = findViewById(R.id.list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        DividerItemDecoration divider = new DividerItemDecoration(
+                this, LinearLayoutManager.VERTICAL);
+        recyclerView.addItemDecoration(divider);
+        recyclerView.setAdapter(adapter);
+
+        ImageView backButton = findViewById(R.id.back);
+        backButton.setClickable(true);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+    }
+
+    public static String buildAddress(Address address) {
+        if (address == null) return "";
+
+        StringBuilder ret = new StringBuilder();
+
+        if(address.getLocality() != null && !address.getLocality().isEmpty()) {
+            ret.append(address.getLocality());
+        }
+
+        if(address.getAdminArea() != null && !address.getAdminArea().isEmpty()) {
+            if(ret.length() > 0) ret.append(", ");
+            ret.append(stateAbbreviation(address.getAdminArea()));
+        }
+
+
+        if(address.getCountryCode() != null && !address.getCountryCode().isEmpty()) {
+            if(ret.length() > 0) ret.append(", ");
+
+            if(address.getLocality() != null && !address.getLocality().isEmpty()) {
+                ret.append(address.getCountryCode());
+            } else {
+                ret.append(address.getCountryName());
+            }
+        }
+
+        return ret.toString();
+    }
+
+    public static String stateAbbreviation(String state) {
+        return switch (state) {
+            case "Alabama" -> "AL";
+            case "Alaska" -> "AK";
+            case "Alberta" -> "AB";
+            case "American Samoa" -> "AS";
+            case "Arizona" -> "AZ";
+            case "Arkansas" -> "AR";
+            case "Armed Forces (AE)" -> "AE";
+            case "Armed Forces Americas" -> "AA";
+            case "Armed Forces Pacific" -> "AP";
+            case "British Columbia" -> "BC";
+            case "California" -> "CA";
+            case "Colorado" -> "CO";
+            case "Connecticut" -> "CT";
+            case "Delaware" -> "DE";
+            case "District Of Columbia" -> "DC";
+            case "Florida" -> "FL";
+            case "Georgia" -> "GA";
+            case "Guam" -> "GU";
+            case "Hawaii" -> "HI";
+            case "Idaho" -> "ID";
+            case "Illinois" -> "IL";
+            case "Indiana" -> "IN";
+            case "Iowa" -> "IA";
+            case "Kansas" -> "KS";
+            case "Kentucky" -> "KY";
+            case "Louisiana" -> "LA";
+            case "Maine" -> "ME";
+            case "Manitoba" -> "MB";
+            case "Maryland" -> "MD";
+            case "Massachusetts" -> "MA";
+            case "Michigan" -> "MI";
+            case "Minnesota" -> "MN";
+            case "Mississippi" -> "MS";
+            case "Missouri" -> "MO";
+            case "Montana" -> "MT";
+            case "Nebraska" -> "NE";
+            case "Nevada" -> "NV";
+            case "New Brunswick" -> "NB";
+            case "New Hampshire" -> "NH";
+            case "New Jersey" -> "NJ";
+            case "New Mexico" -> "NM";
+            case "New York" -> "NY";
+            case "Newfoundland" -> "NF";
+            case "North Carolina" -> "NC";
+            case "North Dakota" -> "ND";
+            case "Northwest Territories" -> "NT";
+            case "Nova Scotia" -> "NS";
+            case "Nunavut" -> "NU";
+            case "Ohio" -> "OH";
+            case "Oklahoma" -> "OK";
+            case "Ontario" -> "ON";
+            case "Oregon" -> "OR";
+            case "Pennsylvania" -> "PA";
+            case "Prince Edward Island" -> "PE";
+            case "Puerto Rico" -> "PR";
+            case "Quebec" -> "PQ";
+            case "Rhode Island" -> "RI";
+            case "Saskatchewan" -> "SK";
+            case "South Carolina" -> "SC";
+            case "South Dakota" -> "SD";
+            case "Tennessee" -> "TN";
+            case "Texas" -> "TX";
+            case "Utah" -> "UT";
+            case "Vermont" -> "VT";
+            case "Virgin Islands" -> "VI";
+            case "Virginia" -> "VA";
+            case "Washington" -> "WA";
+            case "West Virginia" -> "WV";
+            case "Wisconsin" -> "WI";
+            case "Wyoming" -> "WY";
+            case "Yukon Territory" -> "YT";
+            default -> state;
+        };
+    }
+
+    public static String getAddress(Context context, ManifestStore manifestStore) {
+        AtomicReference<String> retAddress = new AtomicReference<>(null);
+
+        if (manifestStore != null && manifestStore.getAssertions() != null
+                && manifestStore.getAssertions().getStdsExif() != null) {
+            manifestStore.getAssertions().getStdsExif().forEach(it -> {
+                try {
+                    if (it.getExifData() != null && it.getExifData().getLongitude() != null
+                            && !it.getExifData().getLongitude().isEmpty()
+                            && it.getExifData().getLatitude() != null
+                            && !it.getExifData().getLatitude().isEmpty()) {
+                        double longitude = Double.parseDouble(it.getExifData().getLongitude());
+                        double latitude = Double.parseDouble(it.getExifData().getLatitude());
+
+                        if (!Geocoder.isPresent()) {
+                            // geocoding not present, fallback to coordinates
+                            retAddress.set(latitude + "," + longitude);
+                            return;
+                        }
+
+                        Geocoder geocoder = new Geocoder(context);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            CountDownLatch countDownLatch = new CountDownLatch(1);
+                            geocoder.getFromLocation(latitude, longitude, 1, addresses -> {
+                                retAddress.set(buildAddress(addresses.get(0)));
+                                countDownLatch.countDown();
+                            });
+                            countDownLatch.await();
+                        } else {
+                            try {
+                                retAddress.set(buildAddress(
+                                        geocoder.getFromLocation(latitude, longitude, 1).get(0)));
+                            } catch (Exception e) {
+                                retAddress.set(latitude + "," + longitude);
+                            }
+                        }
+                    }
+                } catch(Exception e) {
+                    // process or ignore
+                }
+            });
+        }
+
+        return retAddress.get();
     }
 
     @Override

@@ -12,7 +12,7 @@ prebuilt_etc {
 
     src: "privapp-permissions-soundrecorder.xml",
     sub_dir: "permissions",
-    product_specific: true,
+    system_ext_specific: true,
     filename_from_src: true,
 }
 

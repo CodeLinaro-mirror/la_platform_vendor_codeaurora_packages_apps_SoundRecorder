@@ -40,6 +40,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.soundrecorder.C2PAActivity;
 import com.android.soundrecorder.ConfigUtil;
@@ -84,7 +85,7 @@ public class MediaItemViewHolder extends BaseViewHolder {
         mDateFormatter = new SimpleDateFormat(itemView.getResources().getString(
                 R.string.list_item_date_modified_format), java.util.Locale.US);
         mC2paView = (ImageView) itemView.findViewById(R.id.list_cr_image);
-        mC2paLayout = (FrameLayout) itemView.findViewById(R.id.list_cr) ;
+        mC2paLayout = (FrameLayout) itemView.findViewById(R.id.list_cr);
         SharedPreferences sharedPreferences = itemView.getContext().getSharedPreferences(
                 "storage_Path", Context.MODE_PRIVATE);
         mIsC2paEnabled = itemView.getContext().getResources().getBoolean(
@@ -104,7 +105,7 @@ public class MediaItemViewHolder extends BaseViewHolder {
             long dateModified = ((MediaItem)item).getDateModified();
             Date date = new Date(dateModified);
             mDateModifiedView.setText(mDateFormatter.format(date));
-
+            mC2paLayout.setVisibility(View.GONE);
             long duration = ((MediaItem)item).getDuration() / 1000; // millisecond to second
             mDurationView.setText(Utils.timeToString(mDurationView.getContext(), duration));
 
@@ -145,6 +146,15 @@ public class MediaItemViewHolder extends BaseViewHolder {
 
     private void tryC2PA(String path) {
         ParcelFileDescriptor pfd = mC2paValidations.get(path);
+        if (pfd == null || !pfd.getFileDescriptor().valid()) {
+            Log.e(TAG, "tryC2PA PFD is null or PFD is invalid!! filePath = " + path);
+            Toast.makeText(mRootView.getContext(), "Please click later, validation is not ready",
+                    Toast.LENGTH_SHORT).show();
+            mC2paLayout.setVisibility(View.GONE);
+            ValidationTask validationTask = new ValidationTask();
+            validationTask.execute(new String[] {path});
+            return;
+        }
         Intent intent = new Intent();
         intent.setClass(mRootView.getContext(), C2PAActivity.class);
         intent.putExtra(C2PAActivity.C2PA_REPORT, pfd.detachFd());

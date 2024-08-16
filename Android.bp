@@ -12,14 +12,17 @@ prebuilt_etc {
 
     src: "privapp-permissions-soundrecorder.xml",
     sub_dir: "permissions",
-    product_specific: true,
+    system_ext_specific: true,
     filename_from_src: true,
 }
 
 android_app {
     name: "QtiSoundRecorder",
 
-    srcs: ["**/*.java"],
+    srcs: [
+        "**/*.java",
+        "**/*.kt",
+    ],
 
     resource_dirs: ["res"],
 
@@ -30,13 +33,16 @@ android_app {
         "androidx.recyclerview_recyclerview",
         "androidx.core_core",
         "qti_soundrecorder_wrapper",
+        "androidx-constraintlayout_constraintlayout",
+        "gson",
+        "vendor.qti.hardware.c2pa-V1-java",
     ],
     required: ["privapp_whitelist_com.android.soundrecorder"],
 
     overrides: ["SoundRecorder"],
 
-    product_specific: true,
-    sdk_version: "current",
+    system_ext_specific: true,
+    platform_apis: true,
 
     optimize: {
         proguard_flags_files: ["proguard.flags"],

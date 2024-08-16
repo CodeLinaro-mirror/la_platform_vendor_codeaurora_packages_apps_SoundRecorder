@@ -721,7 +721,12 @@ public class SoundRecorder extends Activity
                     mAudioSourceType = MediaRecorderWrapper.AudioSource.VOICE_UPLINK;
                     Log.e(TAG, "Selected Voice Tx only Source: sourcetype" + mAudioSourceType);
                 }
-                if (mSharedPreferences.getBoolean(ConfigUtil.KEY_USE_CUSTOM_CONFIG, false)) {
+                if (mSharedPreferences.getBoolean(ConfigUtil.KEY_C2PA_ENABLED, false)) {
+                    setBitRate(BITRATE_MPEGH);
+                    new StartRecordingTask().execute(new RecordingParams(
+                            MediaRecorderWrapper.OutputFormat.MPEG_4, ".m4a", this,
+                            mAudioSourceType, MediaRecorderWrapper.AudioEncoder.AAC));
+                } else if (mSharedPreferences.getBoolean(ConfigUtil.KEY_USE_CUSTOM_CONFIG, false)) {
                     int bitRate = mConfigUtil.getBitRate(
                             mSharedPreferences.getInt(ConfigUtil.KEY_BITRATE, 0));
                     int sampleRate = mConfigUtil.getSampleRate(
@@ -848,10 +853,34 @@ public class SoundRecorder extends Activity
             invalidateOptionsMenu();
             break;
         case R.id.stopButton:
-            mRecorder.stop();
-            showRenameDialogIfNeed();
-            mVUMeter.resetAngle();
-            invalidateOptionsMenu();
+            if (mRecorder.isC2paEnabled()) {
+                Log.d(TAG, "show C2PA progress bar");
+                ProgressDialog progressDialog = new ProgressDialog(SoundRecorder.this);
+                progressDialog.setTitle("Sign recorded file");
+                progressDialog.setMessage("C2PA signing...");
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mRecorder.stop();
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                progressDialog.dismiss();
+                                Log.d(TAG, "dismiss C2PA progress bar");
+                                showRenameDialogIfNeed();
+                                mVUMeter.resetAngle();
+                                invalidateOptionsMenu();
+                            }
+                        });
+                    }
+                }).start();
+            } else {
+                mRecorder.stop();
+                showRenameDialogIfNeed();
+                mVUMeter.resetAngle();
+                invalidateOptionsMenu();
+            }
             break;
         }
     }

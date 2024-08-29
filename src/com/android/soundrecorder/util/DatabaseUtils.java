@@ -242,6 +242,9 @@ public class DatabaseUtils {
         cv.put(MediaStore.Audio.Media.TITLE, title);
         cv.put(MediaStore.Audio.Media.DISPLAY_NAME, title);
         cv.put(MediaStore.Audio.Media.DATA, newFile.getAbsolutePath());
+        if (newFile.getAbsolutePath().contains(".m4a")) {
+            cv.put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4");
+        }
         Uri base = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         resolver.update(base, cv, null, null);
     }

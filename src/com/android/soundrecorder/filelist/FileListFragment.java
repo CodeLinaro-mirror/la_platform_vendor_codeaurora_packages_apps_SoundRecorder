@@ -336,7 +336,7 @@ public class FileListFragment extends Fragment {
 
                         item.setPath(newFile.getAbsolutePath());
                         // update list item.
-                        item.setTitle(newName);
+                        item.setTitle(newFile.getName());
                         if (mAdapter != null) {
                             mAdapter.notifyItemChanged(item);
                         }

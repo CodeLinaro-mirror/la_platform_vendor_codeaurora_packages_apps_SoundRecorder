@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
 
 import com.android.soundrecorder.util.Utils;
@@ -23,7 +24,9 @@ public class SettingsActivity extends Activity {
     private SharedPreferences.Editor mPrefsStoragePathEditor;
     private int mBitRateIndex, mSampleRatesIndex, mChannelIndex, mOutputFormatIndex, mCodecIndex;
     private CheckBox mCustomConfigView;
+    private CheckBox mC2paCheckBoxView;
     private boolean mUseCustomConfig;
+    private boolean mC2paEnabled;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +57,7 @@ public class SettingsActivity extends Activity {
                         mChannelView, mCodecView};
         mSharedPreferences = getSharedPreferences("storage_Path", Context.MODE_PRIVATE);
         mPrefsStoragePathEditor = mSharedPreferences.edit();
+        addC2PACheckBox();
         loadConfig();
         setListener();
         updateUI();
@@ -67,11 +71,13 @@ public class SettingsActivity extends Activity {
         mChannelIndex = mSharedPreferences.getInt(ConfigUtil.KEY_CHANNEL, 0);
         mOutputFormatIndex = mSharedPreferences.getInt(ConfigUtil.KEY_OUTPUT_FORMAT, 0);
         mCodecIndex = mSharedPreferences.getInt(ConfigUtil.KEY_CODEC, 0);
+        mC2paEnabled = mSharedPreferences.getBoolean(ConfigUtil.KEY_C2PA_ENABLED, false);
         mBitRatesView.setSelection(mBitRateIndex);
         mSampleRatesView.setSelection(mSampleRatesIndex);
         mChannelView.setSelection(mChannelIndex);
         mCodecView.setSelection(mCodecIndex);
         mCustomConfigView.setChecked(mUseCustomConfig);
+        mC2paCheckBoxView.setChecked(mC2paEnabled);
     }
 
     private void setListener() {
@@ -102,9 +108,30 @@ public class SettingsActivity extends Activity {
         mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_OUTPUT_FORMAT, mOutputFormatIndex);
         mPrefsStoragePathEditor.putInt(ConfigUtil.KEY_CODEC, mCodecIndex);
         mPrefsStoragePathEditor.putBoolean(ConfigUtil.KEY_USE_CUSTOM_CONFIG, mUseCustomConfig);
+        mPrefsStoragePathEditor.putBoolean(ConfigUtil.KEY_C2PA_ENABLED, mC2paEnabled);
         mPrefsStoragePathEditor.commit();
     }
 
+    private void addC2PACheckBox() {
+        mC2paCheckBoxView = findViewById(R.id.c2pa_enabled_checkbox);
+        if (getResources().getBoolean(R.bool.c2pa_feature_enabled)) {
+            mC2paCheckBoxView.setVisibility(View.VISIBLE);
+            mC2paCheckBoxView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                    mC2paEnabled = checked;
+                    mCustomConfigView.setEnabled(!checked);
+                    if (checked) {
+                        mCustomConfigView.setChecked(false);
+                    }
+                    saveConfig();
+                }
+            });
+        } else {
+            mC2paEnabled = false;
+            saveConfig();
+        }
+    }
     private AdapterView.OnItemSelectedListener mListener =
             new AdapterView.OnItemSelectedListener() {
         @Override

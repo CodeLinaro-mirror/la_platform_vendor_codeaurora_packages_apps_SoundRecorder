@@ -13,6 +13,14 @@
     android:orientation="vertical"
     >
     <CheckBox
+        android:id="@+id/c2pa_enabled_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="C2PA Enabled"
+        android:visibility="gone"
+        android:checked="false"
+        />
+    <CheckBox
         android:id="@+id/custom_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

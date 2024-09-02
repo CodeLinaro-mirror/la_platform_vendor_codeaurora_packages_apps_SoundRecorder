@@ -27,7 +27,7 @@ public class ConfigUtil {
     public static final String KEY_CHANNEL = "channel";
     public static final String KEY_OUTPUT_FORMAT = "outputFormat";
     public static final String KEY_CODEC = "codec";
-
+    public static final String KEY_C2PA_ENABLED = "c2pa_enabled";
     private static final String AMR_NB = "AMR_NB";
     private static final String AMR_WB = "AMR_WB";
     private static final String AAC = "AAC_LC";

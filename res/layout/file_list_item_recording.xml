@@ -71,11 +71,30 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/list_cr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@id/list_check_box_layout"
+        android:layout_centerVertical="true"
+        android:visibility="gone"
+        android:paddingStart="@dimen/list_item_checkbox_padding"
+        android:paddingEnd="@dimen/list_item_checkbox_padding">
+
+        <ImageView
+            android:id="@+id/list_cr_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="24dp"
+            android:src="@drawable/ic_c2pa_new"
+            tools:visibility="visible" />
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/list_icon"
-        android:layout_toStartOf="@id/list_check_box_layout"
+        android:layout_toStartOf="@id/list_cr"
         android:gravity="center_vertical"
         android:layout_centerVertical="true"
         android:orientation="vertical">

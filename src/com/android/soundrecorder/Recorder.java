@@ -132,7 +132,7 @@ public class Recorder implements MediaRecorder.OnInfoListener {
     }
 
     public int getMaxAmplitude() {
-        if (mState != RECORDING_STATE)
+        if (mState != RECORDING_STATE || isC2paEnabled())
             return 0;
         return mRecorder.getMaxAmplitude();
     }

@@ -69,8 +69,26 @@ struct AHardwareBufferDeleter {
 
 using HardwareBufferPtr = std::unique_ptr<AHardwareBuffer, AHardwareBufferDeleter>;
 
+std::map<int, HardwareBufferPtr> mHwBufferList;
+
+void addBufferToMap(int key, AHardwareBuffer* buffer) {
+        if (buffer != nullptr) {
+                mHwBufferList[key] = HardwareBufferPtr(buffer);
+            }
+    }
+
+bool removeBufferFromMap(int key) {
+        auto it = mHwBufferList.find(key);
+        if (it != mHwBufferList.end()) {
+                mHwBufferList.erase(it);
+                return true;
+            }
+        return false;
+    }
+
 void JNICALL Java_com_android_soundrecorder_util_FileUtils_nativeFreeFd(
         JNIEnv *env, jobject obj, jint id){
+    removeBufferFromMap(id);
 }
 
 jintArray JNICALL Java_com_android_soundrecorder_util_FileUtils_nativeGetHardwareBufferFd(
@@ -87,6 +105,71 @@ jintArray JNICALL Java_com_android_soundrecorder_util_FileUtils_nativeGetHardwar
     int values[2] = {-1, -1};
 
     jintArray result = env->NewIntArray(2);
+    const char *filePath = env->GetStringUTFChars(jpath, 0);
+    T_CHECK(filePath != NULL);
 
+    fd = open(filePath, O_RDONLY);
+    T_CHECK_ERR(fd > 0, fd);
+    ret = fstat(fd, &appStat);
+    T_CHECK_ERR(ret == 0, -1);
+    fdSize = appStat.st_size;
+    T_CHECK_ERR(fdSize > 0, -1);
+
+    buffLen = fdSize;
+    bufDesc.width = (buffLen + (SIZE_2MB -1)) & (~(SIZE_2MB - 1));
+    bufDesc.height = 1;
+    bufDesc.layers = 1;
+    bufDesc.format = AHARDWAREBUFFER_FORMAT_BLOB;
+
+    ret = AHardwareBuffer_allocate(&bufDesc, &hwBuffer);
+    T_CHECK_ERR(ret == 0 && hwBuffer != nullptr, -1);
+
+    nativeHandle = AHardwareBuffer_getNativeHandle(hwBuffer);
+    T_CHECK_ERR(nativeHandle != nullptr, -1);
+
+    nativeHandleAIDL = android::dupToAidl(nativeHandle);
+    T_CHECK_ERR(!android::isAidlNativeHandleEmpty(nativeHandleAIDL), -1);
+
+    buffer = malloc(fdSize);
+    T_CHECK_ERR(buffer != nullptr, -1);
+
+    ret = read(fd, buffer, fdSize);
+    T_CHECK_ERR(ret == fdSize, -1);
+    ret = 0;
+
+    LOGD_PRINT("Load file of size :%d %d", fdSize, nativeHandleAIDL.fds[0].get());
+    ashmemFd = dup(nativeHandleAIDL.fds[0].get());
+    T_CHECK_ERR(ashmemFd > 0, fd);
+
+    outBuffer = mmap(NULL, fdSize, PROT_READ | PROT_WRITE, MAP_SHARED, ashmemFd, 0);
+    T_CHECK_ERR(outBuffer != MAP_FAILED, -1);
+
+    memcpy(outBuffer, buffer, fdSize);
+
+    LOGD_PRINT("Successfully loaded file into ashmem memory");
+
+    addBufferToMap(ashmemFd, hwBuffer);
+
+    env->ReleaseStringUTFChars(jpath, filePath);
+    values[0] = ashmemFd;
+    values[1] = static_cast<int>(fdSize);
+    env->SetIntArrayRegion(result, 0, 2, values);
+
+    exit:
+    if (ret != 0) {
+        removeBufferFromMap(ashmemFd);
+    }
+    if (outBuffer != nullptr) {
+        munmap(outBuffer, fdSize);
+    }
+    if (ret != 0 && ashmemFd >= 0) {
+        close(ashmemFd);
+    }
+    if (buffer != NULL) {
+        free(buffer);
+    }
+    if (fd > 0) {
+        close(fd);
+    }
     return result;
 }

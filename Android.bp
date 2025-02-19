@@ -48,7 +48,34 @@ android_app {
         proguard_flags_files: ["proguard.flags"],
     },
 
+    use_embedded_native_libs: true,
     privileged: true,
+    jni_libs: ["libjni_recorderutils"],
 
+}
+
+cc_library_shared {
+    name: "libjni_recorderutils",
+    srcs: ["jni/recorder_utils_jni.cpp"],
+    cflags: [
+        "-ffast-math",
+        "-O3",
+        "-funroll-loops",
+    ],
+    header_libs: [
+        "jni_headers",
+        "libnativewindow_headers",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+        "android.hardware.common-V2-ndk",
+    ],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libbinder_ndk",
+        "libutils",
+        "libnativewindow",
+    ],
 }
 

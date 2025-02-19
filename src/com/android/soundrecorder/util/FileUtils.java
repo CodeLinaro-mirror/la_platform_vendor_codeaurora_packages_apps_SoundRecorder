@@ -43,6 +43,7 @@ import java.util.Map;
 
 import android.content.ContentValues;
 import android.hardware.common.Ashmem;
+import android.hardware.HardwareBuffer;
 import android.os.ParcelFileDescriptor;
 import android.os.SharedMemory;
 import android.system.ErrnoException;
@@ -57,6 +58,9 @@ import android.content.ContentResolver;
 
 
 public class FileUtils {
+    static {
+        System.loadLibrary("jni_recorderutils");
+    }
     public static final int NOT_FOUND = -1;
     public static final int SAVE_FILE_START_INDEX = 1;
     private static final String TAG = "FileUtils";
@@ -280,4 +284,15 @@ public class FileUtils {
         }
         return byteBuffer;
     }
+
+    public static int[] getHardwareBufferFd(String filePath) {
+        return nativeGetHardwareBufferFd(filePath);
+    }
+
+    public static void freeFd(int id) {
+        nativeFreeFd(id);
+    }
+
+    private native static int[] nativeGetHardwareBufferFd(String filePath);
+    private native static void nativeFreeFd(int id);
 }

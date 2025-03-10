@@ -1,8 +1,10 @@
 /**
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 package com.android.soundrecorder;
+
+import static com.android.soundrecorder.filelist.FileListFragment.MIME_TYPE_AUDIO;
 
 import android.app.Activity;
 import android.content.Context;
@@ -98,9 +100,9 @@ public class C2PAActivity extends Activity {
         C2PAData data = Utils.jsonToC2PAData(jsonString);
         Resources res = getResources();
         C2PAPresenter.Labels labels = new C2PAPresenter.Labels(
-                res.getString(R.string.c2pa_info_thumbnail_desc_creative_work),
-                res.getString(R.string.c2pa_info_thumbnail_desc_original),
-                res.getString(R.string.c2pa_info_thumbnail_desc_modified),
+                "",
+                "",
+                "",
                 res.getString(R.string.c2pa_info_thumbnail_type_photo),
                 res.getString(R.string.c2pa_info_thumbnail_type_image),
                 res.getString(R.string.c2pa_info_thumbnail_type_video),
@@ -111,7 +113,7 @@ public class C2PAActivity extends Activity {
                 res.getString(R.string.c2pa_info_created_with)
         );
 
-        C2PAPresenter presenter = new C2PAPresenter(data, labels);
+        C2PAPresenter presenter = new C2PAPresenter(MIME_TYPE_AUDIO, data, labels);
         ArrayList<Item> list = new ArrayList<>();
         List<ManifestStore> reversedManifests = presenter.getManifests();
         Collections.reverse(reversedManifests);
@@ -119,7 +121,7 @@ public class C2PAActivity extends Activity {
             Item item = new Item(
                     getAddress(this, manifestStore),
                     presenter.getThumbnail(manifestStore, 200),
-                    presenter.getDescriptor(manifestStore),
+                    "",
                     presenter.getType(),
                     presenter.getTypeLabel(),
                     presenter.getCapturedWith(manifestStore),
@@ -128,8 +130,7 @@ public class C2PAActivity extends Activity {
                     presenter.isAiGenerated(manifestStore),
                     presenter.getModifications(manifestStore),
                     presenter.getCapturedDate(manifestStore),
-                    presenter.getSignedBy(manifestStore),
-                    presenter.getSignedWith(manifestStore)
+                    presenter.getSignedBy(manifestStore)
             );
             list.add(item);
         }
@@ -262,15 +263,15 @@ public class C2PAActivity extends Activity {
         AtomicReference<String> retAddress = new AtomicReference<>(null);
 
         if (manifestStore != null && manifestStore.getAssertions() != null
-                && manifestStore.getAssertions().getStdsExif() != null) {
-            manifestStore.getAssertions().getStdsExif().forEach(it -> {
+                && manifestStore.getAssertions().getMetadata() != null) {
+            manifestStore.getAssertions().getMetadata().forEach(it -> {
                 try {
-                    if (it.getExifData() != null && it.getExifData().getLongitude() != null
-                            && !it.getExifData().getLongitude().isEmpty()
-                            && it.getExifData().getLatitude() != null
-                            && !it.getExifData().getLatitude().isEmpty()) {
-                        double longitude = Double.parseDouble(it.getExifData().getLongitude());
-                        double latitude = Double.parseDouble(it.getExifData().getLatitude());
+                    if (it.getData() != null && it.getData().getLongitude() != null
+                            && !it.getData().getLongitude().isEmpty()
+                            && it.getData().getLatitude() != null
+                            && !it.getData().getLatitude().isEmpty()) {
+                        double longitude = Double.parseDouble(it.getData().getLongitude());
+                        double latitude = Double.parseDouble(it.getData().getLatitude());
 
                         if (!Geocoder.isPresent()) {
                             // geocoding not present, fallback to coordinates
@@ -328,12 +329,11 @@ public class C2PAActivity extends Activity {
         private int modifications;
         private String capturedDateText;
         private String signedByText;
-        private String signedWithText;
 
         public Item(String address, Bitmap thumbnail, String descriptor, C2PAPresenter.Type type,
                     String typeLabel, String capturedWith, String capturedWithLabel,
                     String capturedLabel, boolean isAiGenerated, int modifications,
-                    String capturedDateText, String signedByText, String signedWithText) {
+                    String capturedDateText, String signedByText) {
             this.address = address;
             this.thumbnail = thumbnail;
             this.descriptor = descriptor;
@@ -345,7 +345,6 @@ public class C2PAActivity extends Activity {
             this.modifications = modifications;
             this.capturedDateText = capturedDateText;
             this.signedByText = signedByText;
-            this.signedWithText = signedWithText;
         }
 
 
@@ -359,7 +358,6 @@ public class C2PAActivity extends Activity {
             sb.append(", isAiGenerated = " + isAiGenerated);
             sb.append(", capturedDateText = " + capturedDateText);
             sb.append(", signedByText = " + signedByText);
-            sb.append(", signedWithText = " + signedWithText);
             sb.append(", address = " + address);
             return sb.toString();
         }
@@ -390,10 +388,6 @@ public class C2PAActivity extends Activity {
 
         public String getSignedByText() {
             return signedByText;
-        }
-
-        public String getSignedWithText() {
-            return signedWithText;
         }
 
         public String getTypeLabel() {

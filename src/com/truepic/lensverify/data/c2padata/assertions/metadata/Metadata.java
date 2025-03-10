@@ -20,19 +20,19 @@
  * SOFTWARE.
  */
 
-package com.truepic.lensverify.data.c2padata.assertions.exif;
+package com.truepic.lensverify.data.c2padata.assertions.metadata;
 
 import com.google.gson.annotations.SerializedName;
 import com.truepic.lensverify.data.c2padata.assertions.DataInstance;
 
-public class StdsExif extends DataInstance {
+public class Metadata extends DataInstance {
     @SerializedName("data")
-    private ExifData exifData;
+    private MetadataDetails data;
     @SerializedName("truepic_id")
     private String truepicId;
 
-    public ExifData getExifData() {
-        return exifData;
+    public MetadataDetails getData() {
+        return data;
     }
 
     public String getTruepicId() {

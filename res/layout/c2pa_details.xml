@@ -56,23 +56,12 @@
         android:background="@drawable/thumbnail_outline"
         android:contentDescription="@string/image_thumbnail"
         android:scaleType="centerCrop"
-        app:layout_constraintBottom_toTopOf="@id/thumbnail_desc"
+        app:layout_constraintBottom_toTopOf="@id/thumbnail_type"
         app:layout_constraintEnd_toStartOf="@id/barrier"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title_barrier"
         app:layout_constraintVertical_bias="0"
         app:layout_constraintVertical_chainStyle="packed" />
-
-    <TextView
-        android:id="@+id/thumbnail_desc"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/c2pa_info_thumbnail_desc_original"
-        android:textAppearance="@style/Text.Semibold"
-        app:layout_constraintBottom_toTopOf="@id/thumbnail_type"
-        app:layout_constraintEnd_toStartOf="@id/barrier"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/thumbnail" />
 
 
     <TextView
@@ -84,7 +73,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/barrier"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/thumbnail_desc" />
+        app:layout_constraintTop_toBottomOf="@id/thumbnail" />
 
 
     <androidx.constraintlayout.widget.Barrier
@@ -92,14 +81,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="end"
-        app:constraint_referenced_ids="thumbnail,thumbnail_desc,thumbnail_type" />
+        app:constraint_referenced_ids="thumbnail,thumbnail_type" />
 
     <TextView
         android:id="@+id/ai_warning"
         style="@style/Text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/default_margin_small"
         android:layout_marginBottom="@dimen/c2pa_info_text_margin"
         android:background="@drawable/ai_background"
         android:padding="@dimen/c2pa_info_text_margin"
@@ -108,7 +96,7 @@
         app:layout_constraintBottom_toTopOf="@id/captured_label"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/barrier"
-        app:layout_constraintTop_toBottomOf="@id/title_barrier"
+        app:layout_constraintTop_toTopOf="@id/thumbnail"
         app:layout_constraintVertical_chainStyle="packed"
         tools:ignore="RtlSymmetry" />
 
@@ -121,8 +109,7 @@
         app:layout_constraintBottom_toTopOf="@id/captured_text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/barrier"
-        app:layout_constraintTop_toBottomOf="@id/ai_warning"
-        app:layout_goneMarginTop="@dimen/default_margin_small" />
+        app:layout_constraintTop_toBottomOf="@id/ai_warning" />
 
     <TextView
         android:id="@+id/captured_text"
@@ -229,33 +216,10 @@
         android:layout_marginBottom="@dimen/c2pa_info_text_margin"
         android:paddingBottom="@dimen/c2pa_info_text_margin"
         android:text="@string/c2pa_info_na"
-        app:layout_constraintBottom_toTopOf="@id/signed_with_label"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/barrier"
-        app:layout_constraintTop_toBottomOf="@id/signed_by_label" />
-
-    <TextView
-        android:id="@+id/signed_with_label"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/c2pa_info_signed_with"
-        android:textAppearance="@style/Text.Grey"
-        app:layout_constraintBottom_toTopOf="@id/signed_with_text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/barrier"
-        app:layout_constraintTop_toBottomOf="@id/signed_by_text" />
-
-    <TextView
-        android:id="@+id/signed_with_text"
-        style="@style/Text.Medium"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/default_margin_small"
-        android:text="@string/c2pa_info_na"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/barrier"
-        app:layout_constraintTop_toBottomOf="@id/signed_with_label" />
+        app:layout_constraintTop_toBottomOf="@id/signed_by_label" />
 
     <ProgressBar
         android:id="@+id/progress"

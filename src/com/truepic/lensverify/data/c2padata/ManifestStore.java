@@ -41,10 +41,6 @@ public class ManifestStore {
     private Claim claim;
     @SerializedName("trusted_timestamp")
     private TrustedTimestamp trustedTimestamp;
-    @SerializedName("validation_statuses")
-    private List<ValidationStatus> validationStatuses;
-    @SerializedName("ai")
-    private AIStatus aiStatus;
 
     public String getUri() {
         return uri;
@@ -68,13 +64,5 @@ public class ManifestStore {
 
     public Claim getClaim() {
         return claim;
-    }
-
-    public List<ValidationStatus> getValidationStatuses() {
-        return validationStatuses;
-    }
-
-    public AIStatus getAIStatus() {
-        return aiStatus;
     }
 }

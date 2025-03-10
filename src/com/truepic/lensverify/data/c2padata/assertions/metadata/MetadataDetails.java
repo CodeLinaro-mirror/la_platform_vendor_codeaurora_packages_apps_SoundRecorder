@@ -20,13 +20,13 @@
  * SOFTWARE.
  */
 
-package com.truepic.lensverify.data.c2padata.assertions.exif;
+package com.truepic.lensverify.data.c2padata.assertions.metadata;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
-public class ExifData {
+public class MetadataDetails {
 
     @SerializedName("@context")
     private Map<String, String> context;

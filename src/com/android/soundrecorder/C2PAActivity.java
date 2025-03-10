@@ -5,6 +5,7 @@
 package com.android.soundrecorder;
 
 import static com.android.soundrecorder.filelist.FileListFragment.MIME_TYPE_AUDIO;
+import static com.android.soundrecorder.util.Utils.EXTRA_C2PA_INVALID;
 
 import android.app.Activity;
 import android.content.Context;
@@ -21,6 +22,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -66,14 +68,26 @@ public class C2PAActivity extends Activity {
         Utils.setUpEdgeToEdge(this);
         setTitle("C2PA Details");
         Intent intent = getIntent();
-        int fd = intent.getIntExtra(C2PA_REPORT, -1);
-        ParcelFileDescriptor pfd = null;
-        try {
-            pfd = ParcelFileDescriptor.fromFd(fd);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        boolean c2paInvalid = intent.getBooleanExtra(EXTRA_C2PA_INVALID, false);
+        ImageView backButton = findViewById(R.id.back);
+        backButton.setClickable(true);
+        backButton.setOnClickListener(view -> finish());
+        if (c2paInvalid) {
+            Log.d(TAG, "onCreate c2paInvalid, show Error message");
+            TextView message = (TextView) findViewById(R.id.message);
+            RecyclerView list = (RecyclerView) findViewById(R.id.list);
+            message.setVisibility(View.VISIBLE);
+            list.setVisibility(View.GONE);
+        } else {
+            int fd = intent.getIntExtra(C2PA_REPORT, -1);
+            ParcelFileDescriptor pfd = null;
+            try {
+                pfd = ParcelFileDescriptor.fromFd(fd);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            parseFileDescriptor(pfd);
         }
-        parseFileDescriptor(pfd);
     }
 
     public void parseFileDescriptor(ParcelFileDescriptor parcelFileDescriptor) {
@@ -143,15 +157,6 @@ public class C2PAActivity extends Activity {
                 this, LinearLayoutManager.VERTICAL);
         recyclerView.addItemDecoration(divider);
         recyclerView.setAdapter(adapter);
-
-        ImageView backButton = findViewById(R.id.back);
-        backButton.setClickable(true);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
     }
 
     public static String buildAddress(Address address) {

@@ -31,6 +31,7 @@ import java.util.List;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.common.Ashmem;
+import android.hardware.HardwareBuffer;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Build;
@@ -530,8 +531,19 @@ public class Recorder implements MediaRecorder.OnInfoListener {
         }
         try {
             File file = mSampleFile;
-            ByteBuffer buffer = FileUtils.readFileToByteBuffer(mSampleFile);
-            Ashmem ashmem = FileUtils.getDataInAshmemObj(buffer);
+            Ashmem ashmem = new Ashmem();
+            int[] values = FileUtils.getHardwareBufferFd(file.getPath());
+            if (values == null) {
+                Log.e(TAG, "values == null");
+                return;
+            }
+            try {
+                ashmem.fd = ParcelFileDescriptor.fromFd(values[0]);
+                ashmem.size = values[1];
+            } catch (IOException e) {
+                Log.e(TAG, "ERROR: Failed to get file descriptor : ", e);
+                return;
+            }
             List<C2PADataTypePair> configParams = Utils.getConfigParams(1);
             List<C2PADataTypePair> assertions = new ArrayList<C2PADataTypePair>();
             Ashmem outAshmem = new Ashmem();
@@ -542,6 +554,7 @@ public class Recorder implements MediaRecorder.OnInfoListener {
             Log.d(TAG,"signC2PA outAshmem.size = " + outAshmem.size);
             if (outAshmem.size > 0) {
                 writeC2PASignedAudioFile(outAshmem.fd, file);
+                FileUtils.freeFd(values[0]);
             }
         } catch (Exception e) {
             Log.e(TAG,"signC2PA failed " + e);

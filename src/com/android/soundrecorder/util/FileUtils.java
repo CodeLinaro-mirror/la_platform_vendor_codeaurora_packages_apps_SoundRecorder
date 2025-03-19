@@ -43,6 +43,7 @@ import java.util.Map;
 
 import android.content.ContentValues;
 import android.hardware.common.Ashmem;
+import android.hardware.HardwareBuffer;
 import android.os.ParcelFileDescriptor;
 import android.os.SharedMemory;
 import android.system.ErrnoException;
@@ -57,6 +58,9 @@ import android.content.ContentResolver;
 
 
 public class FileUtils {
+    static {
+        System.loadLibrary("jni_recorderutils");
+    }
     public static final int NOT_FOUND = -1;
     public static final int SAVE_FILE_START_INDEX = 1;
     private static final String TAG = "FileUtils";
@@ -184,100 +188,14 @@ public class FileUtils {
         return uris;
     }
 
-    public static Ashmem getDataInAshmemObj(ByteBuffer pData) {
-
-        int ret = 0;
-        int rDataSize = 0;
-        Ashmem rAshmem;
-        SharedMemory sharedFd = null;
-        ByteBuffer bbf = null;
-        String s;
-        byte[] recieveSM;
-
-        rAshmem = new Ashmem();
-
-        Log.i(TAG, "getDataInAshmem:Enter.");
-        if (pData == null) {
-            Log.e(TAG, "getDataInAshmem: ERROR: Null ptr passed");
-            return null;
-        }
-
-        rDataSize = pData.array().length - pData.arrayOffset();
-        sharedFd = createSharedMemory(rDataSize);
-        Log.i(TAG, "SharedFd : " + Integer.toString(sharedFd.getFileDescriptor().getInt$()));
-        try {
-            bbf = sharedFd.map(OsConstants.PROT_READ|OsConstants.PROT_WRITE, 0, rDataSize);
-        } catch (ErrnoException e) {
-            Log.e(TAG, "getDataInAshmem: ERROR: Failed to map Sharedmemory : ", e);
-            sharedFd.close();
-            return null;
-        }
-        pData.flip();
-        pData.position(pData.arrayOffset() + pData.position());
-        bbf.put(pData.array(), pData.position(), rDataSize);
-
-        try {
-            rAshmem.fd = ParcelFileDescriptor.dup(sharedFd.getFileDescriptor());
-            rAshmem.size = rDataSize;
-            fd_mem.put(rAshmem.fd.getFileDescriptor(), sharedFd);
-            unmapSharedMemory(rAshmem.fd, bbf);
-        } catch (IOException e) {
-            Log.e(TAG, "getDataInAshmem: ERROR: Failed to get file descriptor : ", e);
-            sharedFd.unmap(bbf);
-            sharedFd.close();
-            fd_mem.remove(rAshmem.fd);
-            return null;
-        }
-
-        Log.i(TAG, "getDataInAshmem:Exit.");
-        return rAshmem;
+    public static int[] getHardwareBufferFd(String filePath) {
+        return nativeGetHardwareBufferFd(filePath);
     }
 
-    private static SharedMemory createSharedMemory(int size) {
-
-        SharedMemory sFD = null;
-
-        try {
-            sFD = SharedMemory.create("", size);
-        } catch (ErrnoException e) {
-            Log.e(TAG, "createSharedMemory: ERROR: Failed to create Sharedmemory : ", e);
-        }
-
-        if (sFD == null || sFD.getSize() != size) {
-            Log.e(TAG, "createSharedMemory: ERROR: Failed to allocate shared memory");
-            sFD.close();
-            return null;
-        }
-
-        return sFD;
+    public static void freeFd(int id) {
+        nativeFreeFd(id);
     }
 
-    private static void unmapSharedMemory(ParcelFileDescriptor pFd, ByteBuffer bBuf) {
-
-        FileDescriptor fd = pFd.getFileDescriptor();
-        if (!fd_mem.containsKey(fd)) {
-            Log.e(TAG, "unmapSharedMemory: ERROR: FD not found in cached map");
-            return;
-        }
-
-        fd_mem.get(fd).unmap(bBuf);
-    }
-
-    public static ByteBuffer readFileToByteBuffer(File file) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(file, "r");
-        ByteBuffer byteBuffer;
-        try {
-            long longLength = raf.length();
-            int length = (int) longLength;
-            if (length != longLength) throw new IOException("File size >= 2 GB");
-            Log.d(TAG,"signC2PA readFileToByteBuffer buffer size =  " + length);
-            byte[] data = new byte[length];
-            raf.readFully(data);
-            byteBuffer = ByteBuffer.allocate(data.length);
-            byteBuffer.put(data);
-        } finally {
-            raf.close();
-        }
-        return byteBuffer;
-    }
+    private native static int[] nativeGetHardwareBufferFd(String filePath);
+    private native static void nativeFreeFd(int id);
 }

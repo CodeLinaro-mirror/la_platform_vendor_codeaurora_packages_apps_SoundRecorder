@@ -33,6 +33,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.common.Ashmem;
+import android.hardware.HardwareBuffer;
 import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -52,6 +53,7 @@ import com.android.soundrecorder.util.Utils;
 import com.android.soundrecorder.R;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -169,8 +171,20 @@ public class MediaItemViewHolder extends BaseViewHolder {
             return false;
         }
         try {
-            ByteBuffer buffer = FileUtils.readFileToByteBuffer(file);
-            Ashmem ashmem = FileUtils.getDataInAshmemObj(buffer);
+            Ashmem ashmem = new Ashmem();
+
+            int[] values = FileUtils.getHardwareBufferFd(filepath);
+            if (values == null) {
+                Log.e(TAG, "values == null");
+                return false;
+            }
+            try {
+                ashmem.fd = ParcelFileDescriptor.fromFd(values[0]);
+                ashmem.size = values[1];
+            } catch (IOException e) {
+                Log.e(TAG, "ERROR: Failed to get file descriptor : ", e);
+                return false;
+            }
             List<C2PADataTypePair> configParams = Utils.getConfigParams(0);
             List<C2PADataTypePair> outputParams = new ArrayList<C2PADataTypePair>();
             int response =
@@ -188,6 +202,7 @@ public class MediaItemViewHolder extends BaseViewHolder {
                         Ashmem report = value.getFdValue();
                         if (report.size > 0) {
                             mC2paValidations.put(filepath, report.fd);
+                            FileUtils.freeFd(values[0]);
                             return true;
                         }
                     }

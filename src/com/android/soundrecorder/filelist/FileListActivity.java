@@ -31,7 +31,12 @@ package com.android.soundrecorder.filelist;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MenuItem;
 import com.android.soundrecorder.R;
 import com.android.soundrecorder.filelist.player.Player;
@@ -41,11 +46,24 @@ import com.android.soundrecorder.util.Utils;
 
 public class FileListActivity extends Activity {
     private Player mPlayer;
+    private static final String TAG = FileListActivity.class.getSimpleName();
+    private ContentObserver mObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            super.onChange(selfChange, uri);
+            Log.d(TAG, "content observer onChange");
+            reloadFragmentAdapter();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_list_activity);
         Utils.setUpEdgeToEdge(this);
+        getContentResolver().registerContentObserver(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mObserver
+        );
         PlayerPanel playerPanel = (PlayerPanel) findViewById(R.id.player_panel);
         mPlayer = new Player(getApplicationContext(), playerPanel);
 
@@ -100,5 +118,6 @@ public class FileListActivity extends Activity {
         if (getPlayer() != null) {
             getPlayer().stopPlayer();
         }
+        getContentResolver().unregisterContentObserver(mObserver);
     }
 }

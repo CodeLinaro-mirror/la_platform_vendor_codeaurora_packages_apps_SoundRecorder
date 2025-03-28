@@ -267,6 +267,7 @@ public class SoundRecorder extends Activity
     private boolean mIsGetContentAction = false;
     private boolean mSdExist = true;
     private boolean mRenameDialogShown = false;
+    private boolean mShouldDismissCalled = true;
 
     private ProgressDialog mProgressDialog;
     private final int MSG_DISMISS_PROGRESS_DIALOG = 1100;
@@ -912,6 +913,7 @@ public class SoundRecorder extends Activity
     }
 
     private void discardSample() {
+        Log.d(TAG, "discardSample");
         mSampleInterrupted = false;
         mRecorder.delete();
         mRecorderProcessed = true;
@@ -1417,20 +1419,27 @@ public class SoundRecorder extends Activity
                         @Override
                         public void onClick(DialogInterface dialog, int which, String newName) {
                             if (acceptSample(newName)) {
-                                startListActivity();
+                                Log.d(TAG, "sample accepted newName = " + newName);
+                                mShouldDismissCalled = false;
+                                dialog.dismiss();
+                                mMsgHandler.postDelayed(() -> startListActivity(), 200);
                             }
                         }
                     });
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    discardSample();
-                    mRenameDialogShown = false;
+                    Log.d(TAG, "onDismiss called");
+                    if (mShouldDismissCalled) {
+                        discardSample();
+                        mRenameDialogShown = false;
+                    }
                 }
             });
             builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
                 @Override
                 public void onCancel(DialogInterface dialog) {
+                    Log.d(TAG, "onCancel called");
                     discardSample();
                     mRenameDialogShown = false;
                 }
@@ -1438,6 +1447,7 @@ public class SoundRecorder extends Activity
             builder.setEditTextContent(getLastFileName(false));
             builder.show();
             mRenameDialogShown = true;
+            mShouldDismissCalled = true;
         } else {
             mRecorder.delete();
         }

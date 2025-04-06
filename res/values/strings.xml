@@ -159,7 +159,6 @@
     <string name="c2pa_info_created_with">Created with</string>
     <string name="c2pa_info_location">Location</string>
     <string name="c2pa_info_signed_by">Signed by</string>
-    <string name="c2pa_info_signed_with">Signed with</string>
     <string name="c2pa_info_na">N/A</string>
     <string name="content_history">Content History</string>
     <string name="c2pa_info_ai">Contains AI-generated content</string>

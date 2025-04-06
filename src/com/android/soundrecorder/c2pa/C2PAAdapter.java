@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -59,7 +59,6 @@ public class C2PAAdapter extends RecyclerView.Adapter<C2PAAdapter.C2PAViewHolder
             holder.location_label.setVisibility(View.GONE);
             holder.location_text.setVisibility(View.GONE);
         }
-        holder.thumbnail_desc.setText(item.getDescriptor());
         holder.thumbnail_type.setText(item.getTypeLabel());
         holder.captured_with_label.setText(item.getCapturedWithLabel());
         holder.captured_with_text.setText(item.getCapturedWith());
@@ -70,18 +69,14 @@ public class C2PAAdapter extends RecyclerView.Adapter<C2PAAdapter.C2PAViewHolder
             holder.modifications_label.setVisibility(View.VISIBLE);
             holder.modifications_text.setVisibility(View.VISIBLE);
             holder.modifications_text.setText(String.valueOf(item.getModifications()));
-            holder.signed_with_label.setVisibility(View.GONE);
             holder.signed_with_text.setVisibility(View.GONE);
         } else {
             holder.modifications_label.setVisibility(View.GONE);
             holder.modifications_text.setVisibility(View.GONE);
-            holder.signed_with_label.setVisibility(View.VISIBLE);
-            holder.signed_with_text.setVisibility(View.VISIBLE);
         }
 
         holder.captured_text.setText(item.getCapturedDateText());
         holder.signed_by_text.setText(item.getSignedByText());
-        holder.signed_with_text.setText(item.getSignedWithText());
         holder.progress.setVisibility(View.GONE);
     }
 
@@ -116,7 +111,6 @@ public class C2PAAdapter extends RecyclerView.Adapter<C2PAAdapter.C2PAViewHolder
             super(itemView);
             title = itemView.findViewById(R.id.title);
             thumbnail = itemView.findViewById(R.id.thumbnail);
-            thumbnail_desc = itemView.findViewById(R.id.thumbnail_desc);
             thumbnail_type = itemView.findViewById(R.id.thumbnail_type);
             ai_warning = itemView.findViewById(R.id.ai_warning);
             captured_label = itemView.findViewById(R.id.captured_label);
@@ -129,8 +123,6 @@ public class C2PAAdapter extends RecyclerView.Adapter<C2PAAdapter.C2PAViewHolder
             modifications_text = itemView.findViewById(R.id.modifications_text);
             signed_by_label = itemView.findViewById(R.id.signed_by_label);
             signed_by_text = itemView.findViewById(R.id.signed_by_text);
-            signed_with_label = itemView.findViewById(R.id.signed_with_label);
-            signed_with_text = itemView.findViewById(R.id.signed_with_text);
             progress = itemView.findViewById(R.id.progress);
         }
     }

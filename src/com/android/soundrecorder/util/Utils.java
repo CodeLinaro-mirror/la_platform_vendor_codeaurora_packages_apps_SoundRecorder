@@ -58,6 +58,7 @@ public class Utils {
     static vendor.qti.hardware.c2pa.IC2PA mFactoryAidl = null;
     static IBinder mBinder;
     static final String TAG = Utils.class.getSimpleName();
+    public static final String EXTRA_C2PA_INVALID = "EXTRA_C2PA_INVALID";
 
     public static String timeToString(Context context, long time) {
         long hour = time / SECOND_PER_HOUR;

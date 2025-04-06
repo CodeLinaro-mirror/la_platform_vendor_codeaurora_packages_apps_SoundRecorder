@@ -29,6 +29,8 @@
 
 package com.android.soundrecorder.filelist.viewholder;
 
+import static com.android.soundrecorder.util.Utils.EXTRA_C2PA_INVALID;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -72,11 +74,17 @@ public class MediaItemViewHolder extends BaseViewHolder {
     private WaveIndicator mWaveIndicator;
     private SimpleDateFormat mDateFormatter;
     private ImageView mC2paView;
+    private boolean mC2paValid = false;
     private FrameLayout mC2paLayout;
     private boolean mIsC2paEnabled;
     private static final String TAG = "MediaItemViewHolder";
     private vendor.qti.hardware.c2pa.IC2PA mFactoryAidl = null;
     private Map<String, ParcelFileDescriptor> mC2paValidations = new HashMap<>();
+    private static final int C2PA_RESPONSE_VALID = 0;
+    private static final int C2PA_RESPONSE_CORRUPTED = -1;
+    private static final int C2PA_SIGNED_VALID = 100;
+    private static final int C2PA_SIGNED_BUT_INVALID = 101;
+    private static final int C2PA_NOT_SIGNED = -100;
 
     public MediaItemViewHolder(View itemView, int rootLayoutId) {
         super(itemView, rootLayoutId);
@@ -123,9 +131,13 @@ public class MediaItemViewHolder extends BaseViewHolder {
                 mC2paView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if (mItem != null) {
-
-                            tryC2PA(mItem.getPath());
+                        Context context = mC2paView.getContext();
+                        if (context != null && mItem != null) {
+                            if (mC2paValid) {
+                                tryC2PA(mItem.getPath());
+                            } else {
+                                startInvalidReport();
+                            }
                         }
                     }
                 });
@@ -163,12 +175,12 @@ public class MediaItemViewHolder extends BaseViewHolder {
         mRootView.getContext().startActivity(intent);
     }
 
-    private boolean isC2PASigned(String filepath) {
+    private int isC2PASigned(String filepath) {
         Log.d(TAG, "validateC2PA isC2PASigned filepath = " + filepath);
         File file = new File(filepath);
         if (!file.exists()) {
             Log.e(TAG, "validateC2PA file not found");
-            return false;
+            return C2PA_NOT_SIGNED;
         }
         try {
             Ashmem ashmem = new Ashmem();
@@ -176,43 +188,57 @@ public class MediaItemViewHolder extends BaseViewHolder {
             int[] values = FileUtils.getHardwareBufferFd(filepath);
             if (values == null) {
                 Log.e(TAG, "values == null");
-                return false;
+                return C2PA_NOT_SIGNED;
             }
             try {
                 ashmem.fd = ParcelFileDescriptor.fromFd(values[0]);
                 ashmem.size = values[1];
             } catch (IOException e) {
                 Log.e(TAG, "ERROR: Failed to get file descriptor : ", e);
-                return false;
+                return C2PA_NOT_SIGNED;
             }
             List<C2PADataTypePair> configParams = Utils.getConfigParams(0);
             List<C2PADataTypePair> outputParams = new ArrayList<C2PADataTypePair>();
             int response =
                     mFactoryAidl.validateMedia(ashmem, configParams, outputParams);
 
-            if (response != 0) {
+            if (response != C2PA_RESPONSE_VALID && response != C2PA_RESPONSE_CORRUPTED) {
                 Log.d(TAG, "validateC2PA response = " + response);
-                return false;
+                return C2PA_NOT_SIGNED;
             }
-            if (outputParams != null && outputParams.size() > 0) {
-                Log.d(TAG, "validateC2PA outputParams = " + outputParams);
-                for (C2PADataTypePair pair : outputParams) {
-                    if ("VALIDATION_REPORT".equals(pair.key)) {
-                        C2PADataType value = pair.value;
-                        Ashmem report = value.getFdValue();
-                        if (report.size > 0) {
-                            mC2paValidations.put(filepath, report.fd);
-                            FileUtils.freeFd(values[0]);
-                            return true;
+            if (response == C2PA_RESPONSE_VALID) {
+                mC2paView.setImageResource(R.drawable.ic_c2pa_new);
+                if (outputParams != null && outputParams.size() > 0) {
+                    Log.d(TAG, "validateC2PA outputParams = " + outputParams);
+                    for (C2PADataTypePair pair : outputParams) {
+                        if ("VALIDATION_REPORT".equals(pair.key)) {
+                            C2PADataType value = pair.value;
+                            Ashmem report = value.getFdValue();
+                            if (report.size > 0) {
+                                mC2paValidations.put(filepath, report.fd);
+                                mC2paValid = true;
+                                FileUtils.freeFd(values[0]);
+                                return C2PA_SIGNED_VALID;
+                            }
                         }
                     }
                 }
+            } else if(response == C2PA_RESPONSE_CORRUPTED) {
+                mC2paView.setImageResource(R.drawable.ic_c2pa_invalid_new);
+                return C2PA_SIGNED_BUT_INVALID;
             }
         } catch (Exception e) {
             Log.e(TAG, "validateC2PA failed " + e);
             e.printStackTrace();
         }
-        return false;
+        return C2PA_NOT_SIGNED;
+    }
+
+    private void startInvalidReport() {
+        Intent intent = new Intent();
+        intent.putExtra(EXTRA_C2PA_INVALID, true);
+        intent.setClass(mRootView.getContext(), C2PAActivity.class);
+        mRootView.getContext().startActivity(intent);
     }
 
     private class ValidationTask extends AsyncTask<String, Void, Integer> {
@@ -220,7 +246,9 @@ public class MediaItemViewHolder extends BaseViewHolder {
         @Override
         protected Integer doInBackground(String... strings) {
             mFilePath = strings[0];
-            if (isC2PASigned(mFilePath)) {
+            int c2paResult = isC2PASigned(mFilePath);
+            Log.e(TAG, "isC2PASigned c2paResult " + c2paResult);
+            if (c2paResult >= C2PA_SIGNED_VALID) {
                 return 0;
             }
             return -1;

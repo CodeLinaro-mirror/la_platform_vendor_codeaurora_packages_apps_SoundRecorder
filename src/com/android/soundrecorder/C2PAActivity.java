@@ -93,7 +93,6 @@ public class C2PAActivity extends Activity {
     public void parseFileDescriptor(ParcelFileDescriptor parcelFileDescriptor) {
         try (FileInputStream fileInputStream = new FileInputStream(
                 parcelFileDescriptor.getFileDescriptor())) {
-            Log.d(TAG, "parseFileDescriptor size = " + fileInputStream.available());
             StringBuilder stringBuilder = new StringBuilder();
             byte[] buffer = new byte[1024];
             int length;

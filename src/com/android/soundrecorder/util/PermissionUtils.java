@@ -112,7 +112,7 @@ public class PermissionUtils extends Activity{
         }
     }
 
-    private static String[] checkRequestedPermission(Activity activity, String[] permissionName) {
+    public static String[] checkRequestedPermission(Activity activity, String[] permissionName) {
         boolean isPermissionGranted = true;
         List<String> needRequestPermission = new ArrayList<String>();
         for (String tmp : permissionName) {

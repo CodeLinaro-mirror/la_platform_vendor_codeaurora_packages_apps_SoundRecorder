@@ -32,6 +32,7 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.media.AudioManager;
@@ -44,6 +45,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.KeyEvent;
@@ -257,6 +259,7 @@ public class SoundRecorder extends Activity
     static final int SAMPLERATE_8000 = 8000;
     static final long STOP_WAIT = 300;
     static final long BACK_KEY_WAIT = 400;
+    private static final String PACKAGE_URL_SCHEME = "package:";
     int mAudioOutputFormat = MediaRecorderWrapper.OutputFormat.AMR_WB;
     String mAmrWidebandExtension = ".awb";
     private AudioManager mAudioManager;
@@ -265,6 +268,7 @@ public class SoundRecorder extends Activity
     private boolean mWAVSupport = true;
     private boolean mExitAfterRecord = false;
     private boolean mIsGetContentAction = false;
+    private boolean mRequestPermissionSelf = false;
     private boolean mSdExist = true;
     private boolean mRenameDialogShown = false;
     private boolean mShouldDismissCalled = true;
@@ -394,8 +398,15 @@ public class SoundRecorder extends Activity
         super.onCreate(icycle);
 
         if (Build.VERSION.SDK_INT >= 23) {
+            mIsGetContentAction = Intent.ACTION_GET_CONTENT.equals(getIntent().getAction());
+            mExitAfterRecord = getIntent().getBooleanExtra(EXIT_AFTER_RECORD, mIsGetContentAction);
             String[] permissions = getOperationPermissionName(OPERATION_RECORD);
-            if (PermissionUtils.checkAndRequestPermission(this, permissions)) {
+            String[] needsPermissions = PermissionUtils.checkRequestedPermission(this, permissions);
+            if (needsPermissions != null && needsPermissions.length > 0 && mExitAfterRecord) {
+                mRequestPermissionSelf = true;
+                Log.e(TAG,"Permission not granted! request by self");
+                requestPermissions(needsPermissions, 200);
+            } else if (PermissionUtils.checkAndRequestPermission(this, permissions)) {
                 Log.e(TAG,"Permission not granted!");
                 finish();
                 return;
@@ -523,6 +534,11 @@ public class SoundRecorder extends Activity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG,"onResume");
+        if (mRequestPermissionSelf) {
+            Log.d(TAG,"onResume requesting permission skip process this time");
+            return;
+        }
         // While we're in the foreground, listen for phone state changes.
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         for(int i = 0; i < mPhoneCount; i++) {
@@ -536,6 +552,49 @@ public class SoundRecorder extends Activity
                     .listen(mPhoneStateListener[i], PhoneStateListener.LISTEN_CALL_STATE);
             }
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        boolean isAllPermissionsGranted = true;
+        for (int i : grantResults) {
+            if (i != PackageManager.PERMISSION_GRANTED)
+                isAllPermissionsGranted = false;
+        }
+        mRequestPermissionSelf = !isAllPermissionsGranted;
+        Log.d(TAG,"onRequestPermissionsResult mRequestPermissionSelf = " + mRequestPermissionSelf);
+        if (mRequestPermissionSelf) {
+            showMissingPermissionDialog();
+        }
+    }
+
+    private void showMissingPermissionDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(R.string.dialog_content);
+        builder.setTitle(R.string.dialog_title_help);
+
+        builder.setPositiveButton(R.string.dialog_button_settings,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse(PACKAGE_URL_SCHEME + getPackageName()));
+                        startActivity(intent);
+                        finish();
+                    }
+                });
+
+        builder.setNegativeButton(R.string.dialog_button_quit,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+
+        builder.show();
     }
 
     @Override

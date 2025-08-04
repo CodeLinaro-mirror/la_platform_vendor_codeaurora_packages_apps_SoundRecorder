@@ -47,6 +47,8 @@ import com.truepic.lensverify.data.c2padata.C2PAData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import vendor.qti.hardware.c2pa.C2PADataType;
 import vendor.qti.hardware.c2pa.C2PADataTypePair;
@@ -135,5 +137,28 @@ public class Utils {
     public static C2PAData jsonToC2PAData(String json) {
         Gson gson = new Gson();
         return gson.fromJson(json, C2PAData.class);
+    }
+
+    public static String getSystemProperties(String name) {
+        Method systemPropertiesGetMethod;
+        try {
+            Class<?> systemPropertiesClass = Class.forName("android.os.SystemProperties");
+            if (systemPropertiesClass == null) {
+                return null;
+            }
+            systemPropertiesGetMethod = systemPropertiesClass.getMethod("get", String.class);
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            Log.e(TAG, "unable to access system class", e);
+            return null;
+        }
+        if (systemPropertiesGetMethod == null) {
+            return null;
+        }
+        try {
+            return (String) systemPropertiesGetMethod.invoke(null, name);
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+            Log.e(TAG, "unable to invoke system method", e);
+        }
+        return null;
     }
 }

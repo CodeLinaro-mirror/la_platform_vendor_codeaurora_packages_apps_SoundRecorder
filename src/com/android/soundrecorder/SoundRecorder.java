@@ -278,6 +278,7 @@ public class SoundRecorder extends Activity
 
     // new add for BT headset for audio playback & recording
     private boolean mForceScoOn = false;
+    private boolean isScoEnabled = false;
     private int mChangedState = -1;
     private int mUpdatedState = -1;
     private int mUpdatedPrevState = -1;
@@ -340,6 +341,22 @@ public class SoundRecorder extends Activity
             if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
                 int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
                 Log.e(TAG, "BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED: " + state);
+            } else if (action.equals(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: " + state);
+                if (state == BluetoothProfile.STATE_CONNECTED
+                        && mForceScoOn && !isScoEnabled) {
+                    // BluetoothHeadset connect & BT Sco not start, start it.
+                    isScoEnabled = true;
+                    mAudioManager.setBluetoothScoOn(true);
+                    mAudioManager.startBluetoothSco();
+                } else if (state == BluetoothProfile.STATE_DISCONNECTED
+                        && mForceScoOn && isScoEnabled) {
+                    // BluetoothHeadset disconnect &  BT Sco is enabled, stop it.
+                    isScoEnabled = false;
+                    mAudioManager.setBluetoothScoOn(false);
+                    mAudioManager.stopBluetoothSco();
+                }
             } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED)) {
                 mChangedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
                 Log.e(TAG, "ACTION_SCO_AUDIO_STATE_CHANGED: " + mChangedState);
@@ -349,8 +366,13 @@ public class SoundRecorder extends Activity
             } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)) {
                 mUpdatedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
                 mUpdatedPrevState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1);
-                if (mForceScoOn && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
-                    mForceScoOn = false;
+                Log.d(TAG, "ACTION_SCO_AUDIO_STATE_UPDATED  mUpdatedState: " + mUpdatedState
+                        + "; mUpdatedPrevState: " + mUpdatedPrevState);
+                if (mForceScoOn && isScoEnabled
+                        && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED
+                        && mUpdatedPrevState == AudioManager.SCO_AUDIO_STATE_CONNECTING) {
+                    // BT Sco is enabled & SCO_AUDIO is disconnected, stop it.
+                    isScoEnabled = false;
                     mAudioManager.setBluetoothScoOn(false);
                     mAudioManager.stopBluetoothSco();
                 }
@@ -590,6 +612,7 @@ public class SoundRecorder extends Activity
         }
         mForceScoOn = TextUtils.equals(Utils.getSystemProperties("debug.bt_sco_record"), "1");
         if (mForceScoOn) {
+            isScoEnabled = true;
             mAudioManager.setBluetoothScoOn(true);
             mAudioManager.startBluetoothSco();
         }
@@ -1461,6 +1484,7 @@ public class SoundRecorder extends Activity
 
         if (mForceScoOn) {
             mForceScoOn = false;
+            isScoEnabled = false;
             mAudioManager.setBluetoothScoOn(false);
             mAudioManager.stopBluetoothSco();
         }
@@ -1617,6 +1641,7 @@ public class SoundRecorder extends Activity
         iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
         iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
         iFilter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
+        iFilter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         registerReceiver(mSCOAudioStatusReceiver, iFilter);
     }
 

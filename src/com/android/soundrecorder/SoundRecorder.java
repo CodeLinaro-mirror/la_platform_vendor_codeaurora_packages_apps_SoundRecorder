@@ -343,11 +343,12 @@ public class SoundRecorder extends Activity
                 Log.e(TAG, "BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED: " + state);
             } else if (action.equals(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)) {
                 int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
-                Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: " + state);
+                Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: mForceScoOn = " + mForceScoOn + " isScoEnabled = " + isScoEnabled);
                 if (state == BluetoothProfile.STATE_CONNECTED
                         && mForceScoOn && !isScoEnabled) {
                     // BluetoothHeadset connect & BT Sco not start, start it.
                     isScoEnabled = true;
+                    mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
                     mAudioManager.setBluetoothScoOn(true);
                     mAudioManager.startBluetoothSco();
                 } else if (state == BluetoothProfile.STATE_DISCONNECTED
@@ -356,6 +357,7 @@ public class SoundRecorder extends Activity
                     isScoEnabled = false;
                     mAudioManager.setBluetoothScoOn(false);
                     mAudioManager.stopBluetoothSco();
+                    mAudioManager.setMode(AudioManager.MODE_NORMAL);
                 }
             } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED)) {
                 mChangedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
@@ -375,6 +377,7 @@ public class SoundRecorder extends Activity
                     isScoEnabled = false;
                     mAudioManager.setBluetoothScoOn(false);
                     mAudioManager.stopBluetoothSco();
+                    mAudioManager.setMode(AudioManager.MODE_NORMAL);
                 }
             }
         }
@@ -613,6 +616,7 @@ public class SoundRecorder extends Activity
         mForceScoOn = TextUtils.equals(Utils.getSystemProperties("debug.bt_sco_record"), "1");
         if (mForceScoOn) {
             isScoEnabled = true;
+            mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
             mAudioManager.setBluetoothScoOn(true);
             mAudioManager.startBluetoothSco();
         }

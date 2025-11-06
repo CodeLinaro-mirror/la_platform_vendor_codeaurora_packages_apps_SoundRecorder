@@ -31,5 +31,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. -->
     <privapp-permissions package="com.android.soundrecorder">
         <permission name="android.permission.CAPTURE_AUDIO_OUTPUT"/>
         <permission name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+        <permission name="android.permission.BLUETOOTH_CONNECT"/>
     </privapp-permissions>
 </permissions>

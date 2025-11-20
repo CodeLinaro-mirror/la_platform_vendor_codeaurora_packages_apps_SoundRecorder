@@ -65,7 +65,8 @@ public class PermissionUtils extends Activity{
     private static String[] RECORD_PERMISSIONS = {
             Manifest.permission.READ_PHONE_STATE, Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAPTURE_AUDIO_OUTPUT,
-            Manifest.permission.READ_MEDIA_AUDIO
+            Manifest.permission.READ_MEDIA_AUDIO,
+            Manifest.permission.BLUETOOTH_CONNECT
     };
 
     private static String[] PLAY_PERMISSIONS = {

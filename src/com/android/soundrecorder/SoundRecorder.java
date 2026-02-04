@@ -1520,6 +1520,7 @@ public class SoundRecorder extends Activity
             isScoEnabled = false;
             mAudioManager.setBluetoothScoOn(false);
             mAudioManager.stopBluetoothSco();
+            mAudioManager.setMode(AudioManager.MODE_NORMAL);
         }
     }
 

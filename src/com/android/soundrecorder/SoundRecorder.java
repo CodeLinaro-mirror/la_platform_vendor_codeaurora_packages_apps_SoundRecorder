@@ -25,6 +25,8 @@ import java.util.Hashtable;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -66,6 +68,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.SubscriptionManager;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
+import android.text.TextUtils;
 
 import com.android.soundrecorder.util.DatabaseUtils;
 import com.android.soundrecorder.filelist.FileListActivity;
@@ -273,6 +276,13 @@ public class SoundRecorder extends Activity
     private boolean mRenameDialogShown = false;
     private boolean mShouldDismissCalled = true;
 
+    // new add for BT headset for audio playback & recording
+    private boolean mForceScoOn = false;
+    private boolean isScoEnabled = false;
+    private int mChangedState = -1;
+    private int mUpdatedState = -1;
+    private int mUpdatedPrevState = -1;
+
     private ProgressDialog mProgressDialog;
     private final int MSG_DISMISS_PROGRESS_DIALOG = 1100;
 
@@ -322,6 +332,85 @@ public class SoundRecorder extends Activity
     private Editor mPrefsStoragePathEditor;
     private ConfigUtil mConfigUtil;
     private ImageButton mSettingsButton;
+
+    // After BluetoothSCO connection failure, retry up to three times.
+    private static final int BT_MIC_RETRY_MAX_COUNT = 3;
+    private static final int BT_MIC_RETRY_DELAY = 500;
+    private int mBtMicRetryCount = 0;
+
+    private Runnable mBtMicRetryRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG, "mBtMicRetryRunnable startBluetoothSco mBtMicRetryCount = " + mBtMicRetryCount + " isScoEnabled = " + isScoEnabled);
+            if (mForceScoOn && !isScoEnabled && mBtMicRetryCount <= BT_MIC_RETRY_MAX_COUNT) {
+                mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                mAudioManager.setBluetoothScoOn(true);
+                mAudioManager.startBluetoothSco();
+            }
+        }
+    };
+
+    private BroadcastReceiver mSCOAudioStatusReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                Log.e(TAG, "BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED: " + state);
+            } else if (action.equals(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
+                Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: mForceScoOn = " + mForceScoOn + " isScoEnabled = " + isScoEnabled + " state = " + state);
+                if (state == BluetoothProfile.STATE_CONNECTED
+                        && mForceScoOn && !isScoEnabled) {
+                    // BluetoothHeadset connect & BT Sco not start, start it.
+                    Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED startBluetoothSco");
+                    // reset
+                    mBtMicRetryCount = 0;
+                    mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                    mAudioManager.setBluetoothScoOn(true);
+                    mAudioManager.startBluetoothSco();
+                } else if (state == BluetoothProfile.STATE_DISCONNECTED
+                        && mForceScoOn && isScoEnabled) {
+                    // BluetoothHeadset disconnect &  BT Sco is enabled, stop it.
+                    Log.d(TAG, "BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED stopBluetoothSco");
+                    mAudioManager.setBluetoothScoOn(false);
+                    mAudioManager.stopBluetoothSco();
+                    mAudioManager.setMode(AudioManager.MODE_NORMAL);
+                }
+            } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED)) {
+                mChangedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+                Log.d(TAG, "ACTION_SCO_AUDIO_STATE_CHANGED: " + mChangedState);
+                if (AudioManager.SCO_AUDIO_STATE_CONNECTED == mChangedState) {
+                    Toast.makeText(context, R.string.bt_sco_audio_connected, Toast.LENGTH_SHORT).show();
+                }
+            } else if (action.equals(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)) {
+                mUpdatedState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+                mUpdatedPrevState = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_PREVIOUS_STATE, -1);
+                Log.d(TAG, "ACTION_SCO_AUDIO_STATE_UPDATED  mUpdatedState: " + mUpdatedState
+                        + "; mUpdatedPrevState: " + mUpdatedPrevState);
+                //SCO connect fail. Because there is no Bluetooth device in BtHelper
+                isScoEnabled = mUpdatedState == AudioManager.SCO_AUDIO_STATE_CONNECTED;
+                if (mForceScoOn
+                        && mUpdatedState == AudioManager.SCO_AUDIO_STATE_DISCONNECTED
+                        && mUpdatedPrevState == AudioManager.SCO_AUDIO_STATE_CONNECTING) {
+                    // retry start Bluetooth sco
+                    postStartBluetoothSco();
+                }
+            }
+        }
+    };
+
+    private void postStartBluetoothSco() {
+        if (mMsgHandler.hasCallbacks(mBtMicRetryRunnable)) {
+            return;
+        }
+        Log.d(TAG, "postBtMicRetryDelay mBtMicRetryCount = " + mBtMicRetryCount + " isScoEnabled = " + isScoEnabled);
+        if (mBtMicRetryCount < BT_MIC_RETRY_MAX_COUNT) {
+            mBtMicRetryCount++;
+            mMsgHandler.postDelayed(mBtMicRetryRunnable, SoundRecorder.BT_MIC_RETRY_DELAY);
+        }
+    }
 
     private PhoneStateListener getPhoneStateListener() {
         PhoneStateListener phoneStateListener = new PhoneStateListener() {
@@ -492,6 +581,7 @@ public class SoundRecorder extends Activity
         registerExternalStorageListener();
         registerPowerOffListener();
         registerCommandBroadcastReceiver();
+        registerSCOAudioListener();
         if (icycle != null) {
             Bundle recorderState = icycle.getBundle(RECORDER_STATE_KEY);
             if (recorderState != null) {
@@ -551,6 +641,12 @@ public class SoundRecorder extends Activity
                     .createForSubscriptionId(subId[0])
                     .listen(mPhoneStateListener[i], PhoneStateListener.LISTEN_CALL_STATE);
             }
+        }
+        mForceScoOn = TextUtils.equals(Utils.getSystemProperties("debug.bt_sco_record"), "1");
+        if (mForceScoOn) {
+            mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            mAudioManager.setBluetoothScoOn(true);
+            mAudioManager.startBluetoothSco();
         }
     }
 
@@ -1417,6 +1513,15 @@ public class SoundRecorder extends Activity
             }
         }
         super.onPause();
+
+        if (mForceScoOn) {
+            mBtMicRetryCount = 0;
+            mForceScoOn = false;
+            isScoEnabled = false;
+            mAudioManager.setBluetoothScoOn(false);
+            mAudioManager.stopBluetoothSco();
+            mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        }
     }
 
     /*
@@ -1551,6 +1656,8 @@ public class SoundRecorder extends Activity
             mCommandReceiver = null;
         }
 
+        unregisterReceiver(mSCOAudioStatusReceiver);
+
         if (null != mProgressDialog && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
             mProgressDialog = null;
@@ -1561,6 +1668,15 @@ public class SoundRecorder extends Activity
         }
 
         super.onDestroy();
+    }
+
+    private void registerSCOAudioListener() {
+        IntentFilter iFilter = new IntentFilter();
+        iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        iFilter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+        iFilter.addAction(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED);
+        iFilter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
+        registerReceiver(mSCOAudioStatusReceiver, iFilter);
     }
 
     /*
